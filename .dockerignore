@@ -1,0 +1,35 @@
+# Node modules
+node_modules/
+npm-debug.log
+
+# Local data
+data/
+portfolio.json
+
+# Environment variables
+.env
+
+# Git
+.git/
+.gitignore
+
+# Documentation (not needed in container)
+README.md
+SWISS_STOCKS.md
+TROUBLESHOOTING.md
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Artifacts directory
+/Users/flaviowaser/.gemini/
+
+# Example files
+.env.example
+portfolio.example.json

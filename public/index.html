@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Helvetfolio</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Helvetfolio</h1>
+            <p class="subtitle">Swiss stock portfolio, integrated with Actual Budget</p>
+        </header>
+
+        <!-- Portfolio Summary -->
+        <div class="summary-card">
+            <div class="summary-item">
+                <span class="summary-label">Total Stocks</span>
+                <span class="summary-value" id="totalStocks">0</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Total Value</span>
+                <span class="summary-value" id="totalValue">0.00 CHF</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Total Gain / Loss</span>
+                <span class="summary-value" id="totalGain">+0.00 CHF (0.00%)</span>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-bar">
+            <button class="btn btn-primary" id="addStockBtn">Add Stock</button>
+            <div class="button-group">
+                <button class="btn btn-secondary" id="updatePricesBtn">Update Prices</button>
+                <button class="btn btn-secondary" id="refreshBtn">Refresh</button>
+                <button class="btn btn-secondary" id="settingsBtn">Settings</button>
+            </div>
+        </div>
+
+        <!-- Add Stock Modal -->
+        <div class="modal" id="addStockModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Add Stock</h2>
+                    <button class="close-btn" id="closeModal">&times;</button>
+                </div>
+                <form id="addStockForm">
+                    <div class="form-group">
+                        <label for="ticker">Stock Ticker *</label>
+                        <input type="text" id="ticker" placeholder="e.g., NESN, NOVN, ROG" required>
+                        <small>Swiss stocks automatically use .SW suffix</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quantity">Quantity *</label>
+                        <input type="number" id="quantity" min="0.01" step="0.01" placeholder="e.g., 100" required>
+                    </div>
+
+                    <div class="form-divider">
+                        <span>Optional: Historical Purchase Info</span>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="purchaseDate">Purchase Date</label>
+                            <input type="date" id="purchaseDate">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="purchasePrice">Purchase Price (CHF)</label>
+                            <input type="number" id="purchasePrice" min="0" step="0.01" placeholder="e.g., 95.50">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-text" id="cancelBtn">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Stock</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div class="modal" id="settingsModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Connection Settings</h2>
+                    <button class="close-btn" id="closeSettingsModal">&times;</button>
+                </div>
+                <form id="settingsForm">
+                    <div class="form-group">
+                        <label for="serverURL">Actual Server URL *</label>
+                        <input type="url" id="serverURL" placeholder="http://localhost:5006" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="serverPassword">Server Password</label>
+                        <input type="password" id="serverPassword" placeholder="Enter password to update">
+                    </div>
+
+                    <div class="form-actions form-actions-spaced">
+                        <button type="button" class="btn btn-secondary" id="connectBtn">Test Connection &amp; List Budgets</button>
+                    </div>
+
+                    <div class="form-group" id="budgetSelectGroup" style="display: none;">
+                        <label for="budgetId">Select Budget *</label>
+                        <select id="budgetId">
+                            <option value="">— Select a Budget —</option>
+                        </select>
+                    </div>
+
+                    <div class="form-actions form-section-separator">
+                        <button type="button" class="btn btn-reset" id="resetSettingsBtn">Reset Connection Data</button>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-text" id="cancelSettingsBtn">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Settings</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Stocks List -->
+        <div class="stocks-container" id="stocksList">
+            <div class="loading">Loading portfolio...</div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div class="toast" id="toast"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

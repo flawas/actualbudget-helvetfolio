@@ -1,0 +1,36 @@
+{
+  "name": "helvetfolio",
+  "version": "1.0.0",
+  "description": "Helvetfolio — Swiss stock portfolio for Actual Budget",
+  "main": "src/index.js",
+  "type": "module",
+  "bin": {
+    "helvetfolio": "./src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "daemon": "node src/index.js start-daemon",
+    "web": "node src/web-server.js",
+    "test": "node --test tests/stock-fetcher.test.js tests/portfolio-manager.test.js"
+  },
+  "keywords": [
+    "actual-budget",
+    "helvetfolio",
+    "swiss-stocks",
+    "portfolio",
+    "investment",
+    "tracking"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@actual-app/api": "^26.2.1",
+    "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2",
+    "node-cron": "^3.0.3",
+    "yahoo-finance2": "^3.13.0"
+  }
+}
