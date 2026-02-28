@@ -1,23 +1,18 @@
 version: '3.8'
 
-# Uses the published images from Docker Hub / GHCR.
-# No local build required. No .env file needed to start.
-#
-# Pull:
-#   docker pull flawas/helvetfolio:latest
-#   docker pull ghcr.io/flawas/helvetfolio:latest
+# Builds images from source — for local development.
 #
 # Usage:
-#   docker compose up -d helvetfolio-web
-#   docker compose run --rm helvetfolio list
+#   docker compose -f docker-compose.dev.yml up -d helvetfolio-web
+#   docker compose -f docker-compose.dev.yml run --rm helvetfolio list
 
 services:
 
   # One-shot CLI
-  # docker compose run --rm helvetfolio add NESN 100
+  # docker compose -f docker-compose.dev.yml run --rm helvetfolio add NESN 100
   helvetfolio:
-    image: flawas/helvetfolio:latest
-    container_name: helvetfolio
+    build: .
+    container_name: helvetfolio-dev
     environment:
       ACTUAL_SERVER_URL: ${ACTUAL_SERVER_URL:-}
       ACTUAL_PASSWORD: ${ACTUAL_PASSWORD:-}
@@ -31,8 +26,8 @@ services:
 
   # Background daemon — auto-syncs prices on a schedule
   helvetfolio-daemon:
-    image: flawas/helvetfolio:latest
-    container_name: helvetfolio-daemon
+    build: .
+    container_name: helvetfolio-daemon-dev
     environment:
       ACTUAL_SERVER_URL: ${ACTUAL_SERVER_URL:-}
       ACTUAL_PASSWORD: ${ACTUAL_PASSWORD:-}
@@ -47,8 +42,8 @@ services:
 
   # Web UI — portfolio dashboard at http://localhost:3000
   helvetfolio-web:
-    image: flawas/helvetfolio:latest
-    container_name: helvetfolio-web
+    build: .
+    container_name: helvetfolio-web-dev
     environment:
       ACTUAL_SERVER_URL: ${ACTUAL_SERVER_URL:-}
       ACTUAL_PASSWORD: ${ACTUAL_PASSWORD:-}

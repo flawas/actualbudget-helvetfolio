@@ -11,17 +11,17 @@ Prices are fetched from Yahoo Finance and written to a dedicated Actual Budget a
 
 ## Quick start
 
-### 1 — Create a `.env` file
+No configuration required to start. Connection settings are configured through the web UI and persisted to the `./data` directory.
 
-```env
-ACTUAL_SERVER_URL=http://your-actual:5006
-ACTUAL_PASSWORD=yourpassword
-ACTUAL_BUDGET_ID=your-budget-id
+### With Docker Compose (recommended)
+
+```bash
+docker compose up -d helvetfolio-web
 ```
 
-Find your budget ID in Actual Budget under **Settings → Advanced**.
+Open **http://localhost:3000** and configure your Actual Budget connection in **Settings**.
 
-### 2 — Start the web UI
+### With Docker run
 
 ```bash
 docker pull flawas/helvetfolio:latest
@@ -30,31 +30,14 @@ docker pull flawas/helvetfolio:latest
 docker run -d \
   --name helvetfolio-web \
   -p 3000:3000 \
-  --env-file .env \
   -v $(pwd)/data:/app/data \
-  -v $(pwd)/portfolio.json:/app/portfolio.json \
+  -e PORTFOLIO_FILE=/app/data/portfolio.json \
+  -e ACTUAL_DATA_DIR=/app/data \
   --entrypoint node \
   flawas/helvetfolio:latest /app/src/web-server.js
 ```
 
 Open **http://localhost:3000** in your browser.
-
-### Or with Docker Compose (recommended)
-
-Two compose files are provided:
-
-| File | Use case |
-|---|---|
-| `docker-compose.images.yml` | **Pull published images** — no build step, fastest way to get started |
-| `docker-compose.yml` | **Build from source** — for local development |
-
-```bash
-# Using published images (end users)
-docker compose -f docker-compose.images.yml up -d helvetfolio-web
-
-# Using local build (developers)
-docker compose up -d helvetfolio-web
-```
 
 ---
 
@@ -66,6 +49,23 @@ docker compose up -d helvetfolio-web
 | `ghcr.io/flawas/helvetfolio:latest` | [GitHub Container Registry](https://ghcr.io/flawas/helvetfolio) |
 
 Both registries are updated on every release. Multi-arch: `linux/amd64` + `linux/arm64`.
+
+---
+
+## Compose files
+
+| File | Use case |
+|---|---|
+| `docker-compose.yml` | **Published images** — pull and run, no build step |
+| `docker-compose.dev.yml` | **Build from source** — for local development |
+
+```bash
+# End users — published images
+docker compose up -d helvetfolio-web
+
+# Developers — build from source
+docker compose -f docker-compose.dev.yml up -d helvetfolio-web
+```
 
 ---
 
@@ -82,17 +82,15 @@ Three entry points are available from the same image:
 ### CLI commands
 
 ```bash
-# With published image (docker run)
-docker run --rm --env-file .env \
-  -v $(pwd)/data:/app/data \
-  -v $(pwd)/portfolio.json:/app/portfolio.json \
-  flawas/helvetfolio:latest <command>
-
-# With Docker Compose — published images
-docker compose -f docker-compose.images.yml run --rm helvetfolio <command>
-
-# With Docker Compose — local build
+# With Docker Compose
 docker compose run --rm helvetfolio <command>
+
+# With docker run
+docker run --rm \
+  -v $(pwd)/data:/app/data \
+  -e PORTFOLIO_FILE=/app/data/portfolio.json \
+  -e ACTUAL_DATA_DIR=/app/data \
+  flawas/helvetfolio:latest <command>
 ```
 
 | Command | Description |
@@ -109,6 +107,10 @@ docker compose run --rm helvetfolio <command>
 
 ## Configuration
 
+All connection settings can be configured from the **Settings** modal in the web UI — no restart required.
+
+Environment variables can also be used to pre-configure or override settings:
+
 | Variable | Default | Description |
 |---|---|---|
 | `ACTUAL_SERVER_URL` | — | Actual Budget server URL |
@@ -117,11 +119,11 @@ docker compose run --rm helvetfolio <command>
 | `ACTUAL_DATA_DIR` | `./data` | Local cache directory |
 | `STOCK_EXCHANGE_SUFFIX` | `.SW` | Exchange suffix for tickers (`.SW`, `.DE`, `.L`, …) |
 | `UPDATE_INTERVAL_MINUTES` | `60` | Sync interval in daemon mode |
-| `PORTFOLIO_FILE` | `./portfolio.json` | Portfolio data file |
+| `PORTFOLIO_FILE` | `./data/portfolio.json` | Portfolio data file |
 | `WEB_PORT` | `3000` | Web UI port |
 | `WEB_PASSWORD` | — | Enables HTTP Basic Auth on the web UI |
 
-Connection settings can also be configured directly from the Settings modal in the web UI without restarting.
+All data (portfolio, connection settings, Actual Budget cache) is stored in the single `./data` directory.
 
 ---
 

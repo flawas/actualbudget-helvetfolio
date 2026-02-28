@@ -20,16 +20,13 @@ COPY public/ ./public/
 # Create data directory for Actual Budget
 RUN mkdir -p /app/data
 
-# Create volume mount points
-VOLUME ["/app/data", "/app/portfolio.json"]
-
 # Expose web server port
 EXPOSE 3000
 
 # Set environment variables with defaults
 ENV NODE_ENV=production \
     ACTUAL_DATA_DIR=/app/data \
-    PORTFOLIO_FILE=/app/portfolio.json
+    PORTFOLIO_FILE=/app/data/portfolio.json
 
 # Make the CLI executable
 RUN chmod +x /app/src/index.js
