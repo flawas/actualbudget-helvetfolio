@@ -212,106 +212,145 @@ body {
     background: rgba(255, 59, 48, 0.14);
 }
 
-/* Stocks container */
-.stocks-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 16px;
-}
-
-/* Stock card */
-.stock-card {
+/* Stocks table */
+.table-wrapper {
     background: var(--surface);
     border-radius: var(--radius);
-    padding: 20px;
     box-shadow: var(--shadow-sm);
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
-.stock-card:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
+.stocks-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
 }
 
-.stock-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 16px;
-}
-
-.stock-title {
-    flex: 1;
-}
-
-.stock-ticker {
-    font-size: 1.0625rem;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    color: var(--text-primary);
-    margin-bottom: 3px;
-}
-
-.stock-name {
-    font-size: 0.8125rem;
+.stocks-table thead th {
+    padding: 11px 16px;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     color: var(--text-secondary);
-    font-weight: 400;
+    border-bottom: 1px solid var(--separator);
+    white-space: nowrap;
 }
 
-.stock-actions {
+.stocks-table th.num,
+.stocks-table td.num {
+    text-align: right;
+}
+
+.stocks-table tbody tr {
+    border-bottom: 1px solid var(--separator);
+    transition: background 0.1s ease;
+}
+
+.stocks-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.stocks-table tbody tr:hover {
+    background: rgba(0, 0, 0, 0.015);
+}
+
+.stocks-table td {
+    padding: 11px 16px;
+    color: var(--text-primary);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Combined stock cell (ticker + name stacked) */
+.stock-cell {
     display: flex;
-    gap: 6px;
+    flex-direction: column;
+    gap: 2px;
 }
 
+.ticker-badge {
+    font-weight: 700;
+    font-size: 0.9375rem;
+    letter-spacing: -0.01em;
+}
+
+.name-cell {
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px;
+}
+
+/* Responsive column hiding — no horizontal scroll */
+@media (max-width: 1000px) {
+    .col-cost { display: none; }
+}
+
+@media (max-width: 780px) {
+    .col-date,
+    .col-buy,
+    .col-price { display: none; }
+}
+
+/* Inline editing */
+.stocks-table td.editable {
+    cursor: text;
+    position: relative;
+    transition: background 0.1s ease;
+}
+
+.stocks-table td.editable:hover {
+    background: rgba(0, 113, 227, 0.05);
+}
+
+.stocks-table td.editable:hover::after {
+    content: '✎';
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    color: var(--accent);
+    opacity: 0.5;
+}
+
+.cell-input {
+    width: 100%;
+    padding: 3px 8px;
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+    background: var(--surface);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
+    outline: none;
+    min-width: 80px;
+}
+
+/* Delete button */
 .icon-btn {
     background: transparent;
     border: none;
     color: var(--text-tertiary);
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     border-radius: var(--radius-sm);
     cursor: pointer;
     transition: background 0.15s ease, color 0.15s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem;
+    font-size: 0.9375rem;
 }
 
 .icon-btn:hover {
     background: rgba(255, 59, 48, 0.08);
     color: var(--danger);
-}
-
-/* Stock details */
-.stock-details {
-    display: flex;
-    flex-direction: column;
-}
-
-.detail-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 9px 0;
-    border-bottom: 1px solid var(--separator);
-}
-
-.detail-row:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-}
-
-.detail-label {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    font-weight: 400;
-}
-
-.detail-value {
-    color: var(--text-primary);
-    font-weight: 500;
-    font-size: 0.875rem;
 }
 
 .gain-badge {
@@ -563,10 +602,6 @@ small {
         grid-template-columns: 1fr;
     }
 
-    .stocks-container {
-        grid-template-columns: 1fr;
-    }
-
     .form-row {
         grid-template-columns: 1fr;
     }
@@ -578,5 +613,89 @@ small {
 
     .button-group {
         flex-wrap: wrap;
+    }
+}
+
+/* Mobile: stacked card-per-row layout */
+@media (max-width: 560px) {
+    .stocks-table thead {
+        display: none;
+    }
+
+    .stocks-table tbody tr {
+        display: block;
+        border-bottom: none;
+        margin-bottom: 12px;
+        border-radius: var(--radius-sm);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+    }
+
+    .stocks-table tbody tr:hover {
+        background: transparent;
+    }
+
+    .stocks-table tbody tr:last-child {
+        margin-bottom: 0;
+    }
+
+    .stocks-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--separator);
+        white-space: normal;
+        padding: 10px 16px;
+    }
+
+    .stocks-table td:last-child {
+        border-bottom: none;
+    }
+
+    .stocks-table td::before {
+        content: attr(data-label);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-secondary);
+        flex-shrink: 0;
+        margin-right: 12px;
+    }
+
+    /* Stock header cell — no label, full-width */
+    .col-stock {
+        background: rgba(0, 0, 0, 0.02);
+    }
+
+    .col-stock::before {
+        display: none;
+    }
+
+    .col-stock .stock-cell {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Delete button — no label, right-aligned */
+    .col-actions::before {
+        display: none;
+    }
+
+    .col-actions {
+        justify-content: flex-end;
+    }
+
+    /* Show all hidden columns in stacked layout */
+    .col-cost,
+    .col-date,
+    .col-buy,
+    .col-price {
+        display: flex !important;
+    }
+
+    .name-cell {
+        max-width: none;
     }
 }

@@ -1,7 +1,7 @@
 {
   "name": "helvetfolio",
   "version": "1.0.0",
-  "description": "Helvetfolio — Swiss stock portfolio for Actual Budget",
+  "description": "Helvetfolio — Stock portfolio for Actual Budget",
   "main": "src/index.js",
   "type": "module",
   "bin": {

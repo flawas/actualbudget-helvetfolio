@@ -5,8 +5,7 @@ on:
     types: [published]
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/helvetfolio
+  GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/helvetfolio
 
 jobs:
   build-and-push:
@@ -30,20 +29,28 @@ jobs:
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Derives tags automatically from the release tag:
-      #   v1.2.3  →  ghcr.io/<owner>/helvetfolio:1.2.3
-      #              ghcr.io/<owner>/helvetfolio:1.2
-      #              ghcr.io/<owner>/helvetfolio:1
-      #              ghcr.io/<owner>/helvetfolio:latest
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Derives tags automatically from the release tag and applies them to both registries:
+      #   v1.2.3  →  ghcr.io/<owner>/helvetfolio:1.2.3   &  <user>/helvetfolio:1.2.3
+      #              ghcr.io/<owner>/helvetfolio:1.2       &  <user>/helvetfolio:1.2
+      #              ghcr.io/<owner>/helvetfolio:1          &  <user>/helvetfolio:1
+      #              ghcr.io/<owner>/helvetfolio:latest    &  <user>/helvetfolio:latest
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: |
+            ${{ env.GHCR_IMAGE }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/helvetfolio
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}

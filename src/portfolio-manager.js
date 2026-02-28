@@ -387,6 +387,32 @@ class PortfolioManager {
     }
 
     /**
+     * Update purchase info for an existing stock
+     * @param {string} ticker - Stock ticker
+     * @param {object} updates - Fields to update (purchaseDate, purchasePrice)
+     * @returns {Promise<object>} - Updated stock entry
+     */
+    async updateStockInfo(ticker, updates) {
+        await this.loadPortfolio();
+
+        const formattedTicker = this.stockFetcher.formatSwissTicker(ticker);
+        const stock = this.portfolio.stocks.find(s => s.ticker === formattedTicker);
+
+        if (!stock) {
+            throw new Error(`Stock ${ticker} not found in portfolio`);
+        }
+
+        if (updates.purchaseDate !== undefined) stock.purchaseDate = updates.purchaseDate;
+        if (updates.purchasePrice !== undefined) {
+            stock.purchasePrice = updates.purchasePrice;
+            stock.costBasis = stock.quantity * updates.purchasePrice;
+        }
+
+        await this.savePortfolio();
+        return stock;
+    }
+
+    /**
      * Close connections
      */
     async shutdown() {

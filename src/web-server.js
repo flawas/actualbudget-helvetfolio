@@ -146,6 +146,21 @@ app.put('/api/stocks/:ticker/quantity', async (req, res) => {
     }
 });
 
+// Update stock purchase info (date, price)
+app.patch('/api/stocks/:ticker', async (req, res) => {
+    try {
+        const { ticker } = req.params;
+        const { purchaseDate, purchasePrice } = req.body;
+        const updates = {};
+        if (purchaseDate !== undefined) updates.purchaseDate = purchaseDate;
+        if (purchasePrice !== undefined) updates.purchasePrice = parseFloat(purchasePrice);
+        const stock = await manager.updateStockInfo(ticker, updates);
+        res.json({ success: true, stock });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
 // ─── Connection Routes ───────────────────────────────────────────────────────
 
 // Get current connection settings — always reads from portfolio.json so the

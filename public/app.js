@@ -381,7 +381,7 @@ function renderPortfolio() {
     if (!portfolio || portfolio.totalStocks === 0) {
         stocksList.innerHTML = `
             <div class="loading">
-                📊 No stocks in portfolio yet
+                No stocks in portfolio yet
                 <br><small>Click "Add Stock" to get started</small>
             </div>
         `;
@@ -390,79 +390,131 @@ function renderPortfolio() {
         return;
     }
 
-    // Update summary
     updateSummary(portfolio);
     updateSyncInfo(portfolio.lastYahooSync, portfolio.lastActualSync);
 
-    // Render stock cards
-    stocksList.innerHTML = portfolio.stocks.map(stock => createStockCard(stock)).join('');
+    stocksList.innerHTML = `
+        <div class="table-wrapper">
+            <table class="stocks-table">
+                <thead>
+                    <tr>
+                        <th class="col-stock">Stock</th>
+                        <th class="col-qty num">Qty</th>
+                        <th class="col-date">Purchase Date</th>
+                        <th class="col-buy num">Buy Price</th>
+                        <th class="col-cost num">Cost Basis</th>
+                        <th class="col-price num">Current Price</th>
+                        <th class="col-value num">Value</th>
+                        <th class="col-gain num">Gain / Loss</th>
+                        <th class="col-actions"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${portfolio.stocks.map(stock => createStockRow(stock)).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
 
-    // Add event listeners to remove buttons
     document.querySelectorAll('.remove-stock-btn').forEach(btn => {
         btn.addEventListener('click', () => handleRemoveStock(btn.dataset.ticker));
     });
+
+    document.querySelectorAll('.editable').forEach(cell => {
+        cell.addEventListener('click', handleCellClick);
+    });
 }
 
-function createStockCard(stock) {
+function createStockRow(stock) {
     const gainClass = stock.gain >= 0 ? 'positive' : 'negative';
     const gainSign = stock.gain >= 0 ? '+' : '';
+    const purchasePrice = stock.purchasePrice ?? 0;
+    const displayDate = stock.purchaseDate
+        ? new Date(stock.purchaseDate + 'T00:00:00').toLocaleDateString('en-CH')
+        : '—';
 
     return `
-        <div class="stock-card">
-            <div class="stock-header">
-                <div class="stock-title">
-                    <div class="stock-ticker">${stock.ticker}</div>
-                    <div class="stock-name">${stock.name}</div>
+        <tr data-ticker="${stock.ticker}">
+            <td class="col-stock" data-label="Stock">
+                <div class="stock-cell">
+                    <span class="ticker-badge">${stock.ticker}</span>
+                    <span class="name-cell" title="${stock.name}">${stock.name}</span>
                 </div>
-                <div class="stock-actions">
-                    <button class="icon-btn remove-stock-btn" data-ticker="${stock.ticker}" title="Remove stock">
-                        🗑️
-                    </button>
-                </div>
-            </div>
-            
-            <div class="stock-details">
-                <div class="detail-row">
-                    <span class="detail-label">Quantity</span>
-                    <span class="detail-value">${stock.quantity}</span>
-                </div>
-                
-                ${stock.purchaseDate ? `
-                <div class="detail-row">
-                    <span class="detail-label">Purchase Date</span>
-                    <span class="detail-value">${new Date(stock.purchaseDate).toLocaleDateString()}</span>
-                </div>
-                ` : ''}
-                
-                <div class="detail-row">
-                    <span class="detail-label">Purchase Price</span>
-                    <span class="detail-value">${stock.purchasePrice.toFixed(2)} ${stock.currency}</span>
-                </div>
-                
-                <div class="detail-row">
-                    <span class="detail-label">Cost Basis</span>
-                    <span class="detail-value">${stock.costBasis.toFixed(2)} ${stock.currency}</span>
-                </div>
-                
-                <div class="detail-row">
-                    <span class="detail-label">Current Price</span>
-                    <span class="detail-value">${stock.currentPrice.toFixed(2)} ${stock.currency}</span>
-                </div>
-                
-                <div class="detail-row">
-                    <span class="detail-label">Current Value</span>
-                    <span class="detail-value">${stock.currentValue.toFixed(2)} ${stock.currency}</span>
-                </div>
-                
-                <div class="detail-row">
-                    <span class="detail-label">Gain/Loss</span>
-                    <span class="gain-badge ${gainClass}">
-                        ${gainSign}${stock.gain.toFixed(2)} ${stock.currency} (${gainSign}${stock.gainPercent.toFixed(2)}%)
-                    </span>
-                </div>
-            </div>
-        </div>
+            </td>
+            <td class="col-qty num editable" data-field="quantity" data-ticker="${stock.ticker}" data-value="${stock.quantity}" data-label="Qty">${stock.quantity}</td>
+            <td class="col-date editable" data-field="purchaseDate" data-ticker="${stock.ticker}" data-value="${stock.purchaseDate || ''}" data-label="Purchase Date">${displayDate}</td>
+            <td class="col-buy num editable" data-field="purchasePrice" data-ticker="${stock.ticker}" data-value="${purchasePrice}" data-label="Buy Price">${purchasePrice.toFixed(2)} ${stock.currency}</td>
+            <td class="col-cost num" data-label="Cost Basis">${stock.costBasis.toFixed(2)} ${stock.currency}</td>
+            <td class="col-price num" data-label="Current Price">${stock.currentPrice.toFixed(2)} ${stock.currency}</td>
+            <td class="col-value num" data-label="Value">${stock.currentValue.toFixed(2)} ${stock.currency}</td>
+            <td class="col-gain num" data-label="Gain / Loss"><span class="gain-badge ${gainClass}">${gainSign}${stock.gain.toFixed(2)} (${gainSign}${stock.gainPercent.toFixed(2)}%)</span></td>
+            <td class="col-actions"><button class="icon-btn remove-stock-btn" data-ticker="${stock.ticker}" title="Remove">&#x1F5D1;</button></td>
+        </tr>
     `;
+}
+
+function handleCellClick(e) {
+    const cell = e.currentTarget;
+    if (cell.querySelector('.cell-input')) return; // Already editing
+
+    const field = cell.dataset.field;
+    const ticker = cell.dataset.ticker;
+    const value = cell.dataset.value;
+
+    const input = document.createElement('input');
+    input.className = 'cell-input';
+
+    if (field === 'quantity' || field === 'purchasePrice') {
+        input.type = 'number';
+        input.min = '0';
+        input.step = '0.01';
+        input.style.textAlign = 'right';
+    } else if (field === 'purchaseDate') {
+        input.type = 'date';
+    }
+
+    input.value = value;
+    cell.textContent = '';
+    cell.appendChild(input);
+    input.focus();
+    input.select();
+
+    input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') { input.blur(); }
+        if (ev.key === 'Escape') { loadPortfolio(); }
+    });
+
+    let saved = false;
+    input.addEventListener('blur', () => {
+        if (!saved) { saved = true; saveCellEdit(ticker, field, input.value); }
+    });
+}
+
+async function saveCellEdit(ticker, field, newValue) {
+    try {
+        if (field === 'quantity') {
+            const response = await fetch(`${API_BASE}/api/stocks/${ticker}/quantity`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ quantity: parseFloat(newValue) })
+            });
+            if (!response.ok) throw new Error((await response.json()).error);
+        } else {
+            const body = {};
+            if (field === 'purchaseDate') body.purchaseDate = newValue;
+            if (field === 'purchasePrice') body.purchasePrice = parseFloat(newValue);
+            const response = await fetch(`${API_BASE}/api/stocks/${ticker}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!response.ok) throw new Error((await response.json()).error);
+        }
+        showSuccess('Saved');
+    } catch (error) {
+        showError(error.message);
+    }
+    loadPortfolio();
 }
 
 function updateSummary(data) {

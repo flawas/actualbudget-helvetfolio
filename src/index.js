@@ -22,7 +22,7 @@ const updateInterval = parseInt(process.env.UPDATE_INTERVAL_MINUTES || '60', 10)
 
 program
     .name('helvetfolio')
-    .description('Helvetfolio — Swiss stock portfolio for Actual Budget')
+    .description('Helvetfolio — Stock portfolio for Actual Budget')
     .version('1.0.0');
 
 // Add stock command
