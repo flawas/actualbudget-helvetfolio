@@ -1,74 +1,73 @@
 version: '3.8'
 
+# Uses the published images from Docker Hub / GHCR.
+# No local build required.
+#
+# Pull:
+#   docker pull flawas/helvetfolio:latest
+#   docker pull ghcr.io/flawas/helvetfolio:latest
+#
+# Usage:
+#   docker compose -f docker-compose.images.yml up -d helvetfolio-web
+#   docker compose -f docker-compose.images.yml run --rm helvetfolio list
+
 services:
 
+  # One-shot CLI
+  # docker compose -f docker-compose.images.yml run --rm helvetfolio add NESN 100
   helvetfolio:
-    build: .
+    image: flawas/helvetfolio:latest
     container_name: helvetfolio
     environment:
-      # Actual Budget Configuration
+      ACTUAL_SERVER_URL: ${ACTUAL_SERVER_URL}
+      ACTUAL_PASSWORD: ${ACTUAL_PASSWORD}
+      ACTUAL_BUDGET_ID: ${ACTUAL_BUDGET_ID}
       ACTUAL_DATA_DIR: /app/data
-
-      # Extension Configuration
       UPDATE_INTERVAL_MINUTES: ${UPDATE_INTERVAL_MINUTES:-60}
       PORTFOLIO_FILE: /app/portfolio.json
-
     volumes:
-      # Mount local data directory to persist Actual Budget data
       - ./data:/app/data
-
-      # Mount portfolio file to persist portfolio data
       - ./portfolio.json:/app/portfolio.json
-
-    # Override command for different operations
-    # Examples:
-    #   docker-compose run helvetfolio add NESN 100
-    #   docker-compose run helvetfolio update
-    #   docker-compose run helvetfolio list
     command: list
-    # For daemon mode, uncomment below and comment the 'command' above
-    # command: start-daemon
-    # restart: unless-stopped
 
-    # Daemon mode service (runs continuously in background)
+  # Background daemon — auto-syncs prices on a schedule
   helvetfolio-daemon:
-    build: .
+    image: flawas/helvetfolio:latest
     container_name: helvetfolio-daemon
     environment:
+      ACTUAL_SERVER_URL: ${ACTUAL_SERVER_URL}
+      ACTUAL_PASSWORD: ${ACTUAL_PASSWORD}
+      ACTUAL_BUDGET_ID: ${ACTUAL_BUDGET_ID}
       ACTUAL_DATA_DIR: /app/data
       UPDATE_INTERVAL_MINUTES: ${UPDATE_INTERVAL_MINUTES:-60}
       PORTFOLIO_FILE: /app/portfolio.json
-
     volumes:
       - ./data:/app/data
       - ./portfolio.json:/app/portfolio.json
-
     command: start-daemon
     restart: unless-stopped
-    # Uncomment to start daemon automatically
-    # profiles: ["daemon"]
 
-    # Web GUI service
+  # Web UI — portfolio dashboard at http://localhost:3000
   helvetfolio-web:
-    build: .
+    image: flawas/helvetfolio:latest
     container_name: helvetfolio-web
     environment:
+      ACTUAL_SERVER_URL: ${ACTUAL_SERVER_URL:-}
+      ACTUAL_PASSWORD: ${ACTUAL_PASSWORD:-}
+      ACTUAL_BUDGET_ID: ${ACTUAL_BUDGET_ID:-}
       ACTUAL_DATA_DIR: /app/data
       PORTFOLIO_FILE: /app/portfolio.json
       WEB_PORT: 3000
-
+      WEB_PASSWORD: ${WEB_PASSWORD:-}
     volumes:
       - ./data:/app/data
       - ./portfolio.json:/app/portfolio.json
-
     ports:
       - "${WEB_PORT:-3000}:3000"
-
-    entrypoint: [ "node" ]
-    command: [ "/app/src/web-server.js" ]
+    entrypoint: ["node"]
+    command: ["/app/src/web-server.js"]
     restart: unless-stopped
 
-# Volumes
 volumes:
   actual-data:
     driver: local

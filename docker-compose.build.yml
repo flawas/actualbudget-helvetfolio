@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+
+  helvetfolio:
+    build: .
+    container_name: helvetfolio
+    environment:
+      # Actual Budget Configuration
+      ACTUAL_DATA_DIR: /app/data
+
+      # Extension Configuration
+      UPDATE_INTERVAL_MINUTES: ${UPDATE_INTERVAL_MINUTES:-60}
+      PORTFOLIO_FILE: /app/portfolio.json
+
+    volumes:
+      # Mount local data directory to persist Actual Budget data
+      - ./data:/app/data
+
+      # Mount portfolio file to persist portfolio data
+      - ./portfolio.json:/app/portfolio.json
+
+    # Override command for different operations
+    # Examples:
+    #   docker-compose run helvetfolio add NESN 100
+    #   docker-compose run helvetfolio update
+    #   docker-compose run helvetfolio list
+    command: list
+    # For daemon mode, uncomment below and comment the 'command' above
+    # command: start-daemon
+    # restart: unless-stopped
+
+    # Daemon mode service (runs continuously in background)
+  helvetfolio-daemon:
+    build: .
+    container_name: helvetfolio-daemon
+    environment:
+      ACTUAL_DATA_DIR: /app/data
+      UPDATE_INTERVAL_MINUTES: ${UPDATE_INTERVAL_MINUTES:-60}
+      PORTFOLIO_FILE: /app/portfolio.json
+
+    volumes:
+      - ./data:/app/data
+      - ./portfolio.json:/app/portfolio.json
+
+    command: start-daemon
+    restart: unless-stopped
+    # Uncomment to start daemon automatically
+    # profiles: ["daemon"]
+
+    # Web GUI service
+  helvetfolio-web:
+    build: .
+    container_name: helvetfolio-web
+    environment:
+      ACTUAL_DATA_DIR: /app/data
+      PORTFOLIO_FILE: /app/portfolio.json
+      WEB_PORT: 3000
+
+    volumes:
+      - ./data:/app/data
+      - ./portfolio.json:/app/portfolio.json
+
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+
+    entrypoint: [ "node" ]
+    command: [ "/app/src/web-server.js" ]
+    restart: unless-stopped
+
+# Volumes
+volumes:
+  actual-data:
+    driver: local

@@ -1,6 +1,6 @@
 # Swiss Stock Ticker Reference
 
-A comprehensive guide to finding and using Swiss stock tickers with this extension.
+A comprehensive guide to finding and using Swiss stock tickers with Helvetfolio.
 
 ## How Swiss Tickers Work
 
@@ -92,7 +92,7 @@ The SMI is Switzerland's most important stock index, comprising the 20 largest a
 1. Visit [SIX Swiss Exchange](https://www.six-group.com/en/products-services/the-swiss-stock-exchange.html)
 2. Search for your company
 3. Note the ticker symbol (e.g., `NESN`)
-4. Add `.SW` for use with this extension
+4. Add `.SW` for use with Helvetfolio
 
 ### Method 2: Yahoo Finance
 
@@ -104,44 +104,50 @@ The SMI is Switzerland's most important stock index, comprising the 20 largest a
 
 - **Bloomberg**: Symbol format `NESN SW Equity`
 - **Reuters**: Symbol format `NESN.S`
-- **For this extension**: Use `NESN.SW` or just `NESN`
+- **For Helvetfolio**: Use `NESN.SW` or just `NESN`
 
 ## Usage Examples
 
-### Adding SMI Blue Chips
+Stocks can be added from the **web UI** (recommended) or via the CLI.
+
+### Web UI
+
+Open **http://localhost:3000**, click **Add Stock**, enter the ticker and quantity.
+
+### CLI via Docker
 
 ```bash
 # Add major Swiss pharmaceutical stocks
-npm start add NOVN 50    # Novartis
-npm start add ROG 25     # Roche
-npm start add LONN 10    # Lonza
+docker compose run --rm helvetfolio add NOVN 50    # Novartis
+docker compose run --rm helvetfolio add ROG 25     # Roche
+docker compose run --rm helvetfolio add LONN 10    # Lonza
 
 # Add Swiss banks
-npm start add UBSG 200   # UBS
+docker compose run --rm helvetfolio add UBSG 200   # UBS
 
 # Add consumer goods
-npm start add NESN 75    # Nestlé
-npm start add GIVN 5     # Givaudan
+docker compose run --rm helvetfolio add NESN 75    # Nestlé
+docker compose run --rm helvetfolio add GIVN 5     # Givaudan
 ```
 
 ### Building a Diversified Portfolio
 
 ```bash
 # Pharma/Healthcare (40%)
-npm start add NOVN 100
-npm start add ROG 50
-npm start add ALC 75
+docker compose run --rm helvetfolio add NOVN 100
+docker compose run --rm helvetfolio add ROG 50
+docker compose run --rm helvetfolio add ALC 75
 
 # Financials (30%)
-npm start add UBSG 300
-npm start add ZURN 50
+docker compose run --rm helvetfolio add UBSG 300
+docker compose run --rm helvetfolio add ZURN 50
 
 # Industrials (20%)
-npm start add ABB 150
-npm start add GEBN 20
+docker compose run --rm helvetfolio add ABB 150
+docker compose run --rm helvetfolio add GEBN 20
 
 # Consumer (10%)
-npm start add NESN 100
+docker compose run --rm helvetfolio add NESN 100
 ```
 
 ## Ticker Validation

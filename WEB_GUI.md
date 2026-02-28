@@ -1,380 +1,142 @@
-# Web GUI Guide
+# Web UI Guide
 
-Modern web interface for managing your Swiss stock portfolio.
+Portfolio dashboard for managing your holdings and syncing with Actual Budget.
 
-## Quick Start
+---
 
-### Local Installation
+## Installation
 
-1. **Install dependencies** (if not already done):
-
-   ```bash
-   npm install
-   ```
-
-2. **Start the web server**:
-
-   ```bash
-   npm run web
-   ```
-
-3. **Open your browser**:
-
-   ```
-   http://localhost:3000
-   ```
-
-### Docker
+### Docker (recommended)
 
 ```bash
-# Start web GUI with Docker Compose
-docker-compose up -d helvetfolio-web
+docker pull flawas/helvetfolio:latest
+# or: docker pull ghcr.io/flawas/helvetfolio:latest
 
-# Access at:
-http://localhost:3000
+docker run -d \
+  --name helvetfolio-web \
+  -p 3000:3000 \
+  --env-file .env \
+  -v $(pwd)/data:/app/data \
+  -v $(pwd)/portfolio.json:/app/portfolio.json \
+  --entrypoint node \
+  flawas/helvetfolio:latest /app/src/web-server.js
 ```
+
+### Docker Compose
+
+```bash
+docker compose up -d helvetfolio-web
+```
+
+Open **http://localhost:3000** in your browser.
+
+---
 
 ## Features
 
-### 📊 Portfolio Dashboard
+### Portfolio table
 
-- Real-time portfolio summary
-- Total value and gains/losses
-- Stock count
+- All holdings in a single responsive table
+- Inline editing — click **Qty**, **Purchase Date**, or **Buy Price** to edit in-place; press Enter to save, Escape to cancel
+- Gain/loss badge per row (green/red)
+- Summary bar: total value, total gain/loss, total positions
 
-### ➕ Add Stocks
+### Sync status
 
-- Add new stocks with current or historical prices
-- Support for purchase date and price tracking
-- Swiss ticker auto-completion
+Two timestamps are shown below the summary:
 
-### 🗑️ Remove Stocks
+- **Yahoo Finance** — when prices were last fetched
+- **Actual Budget** — when balances were last written
 
-- One-click stock removal
-- Confirmation dialog for safety
+### Price sync
 
-### 🔄 Update Prices
+Click **Update Prices** to fetch the latest prices from Yahoo Finance and push updated balances to Actual Budget.
 
-- Refresh all stock prices with one click
-- Automatic sync with Actual Budget
+### Settings
 
-### 📈 Performance Tracking
+Click **Settings** to configure:
 
-- View gains/losses for each stock
-- Color-coded profit/loss indicators
-- Detailed purchase history
+- Actual Budget server URL, password, and budget selection
+- Web UI password (HTTP Basic Auth)
 
-## Screenshots
+No restart required — settings take effect immediately.
 
-The GUI features:
+---
 
-- **Dark theme** with Swiss flag red accents
-- **Modern glassmorphism** design
-- **Smooth animations** and transitions
-- **Responsive layout** for mobile and desktop
-- **Toast notifications** for user feedback
+## Password protection
 
-## Usage
+To restrict access to the web UI, set a password in the Settings modal or via environment variable:
 
-### Adding a Stock
+```env
+WEB_PASSWORD=your-secret
+```
 
-1. Click "➕Add Stock" button
-2. Enter ticker (e.g., NESN, NOVN, ROG)
+The `WEB_PASSWORD` env var takes precedence over the UI setting. When set, all requests require HTTP Basic Auth.
+
+---
+
+## Adding stocks
+
+1. Click **Add Stock**
+2. Enter the ticker (e.g. `NESN`, `NOVN`, `ROG`) — the exchange suffix is added automatically
 3. Enter quantity
-4. Optionally add purchase date and price
-5. Click "Add Stock"
+4. Optionally set a purchase date and price for gain/loss tracking
+5. Click **Add Stock**
 
-### Removing a Stock
+A new account is created in Actual Budget and the current price is fetched immediately.
 
-1. Find the stock card
-2. Click the 🗑️ icon
-3. Confirm removal
+---
 
-### Updating Prices
+## Accessing from other devices
 
-Click the "🔄 Update Prices" button to fetch latest prices for all stocks.
+Find your host IP and open `http://<IP>:3000` from any device on the same network. Enable the web password to restrict access.
 
-### Viewing Performance
-
-Stock cards automatically display:
-
-- Purchase price vs. current price
-- Total gain/loss in CHF
-- Gain/loss percentage (color-coded)
+---
 
 ## Configuration
 
-### Port
+| Variable | Default | Description |
+|---|---|---|
+| `WEB_PORT` | `3000` | Listening port |
+| `WEB_PASSWORD` | — | HTTP Basic Auth password |
+| `ACTUAL_SERVER_URL` | — | Actual Budget server URL |
+| `ACTUAL_PASSWORD` | — | Actual Budget password |
+| `ACTUAL_BUDGET_ID` | — | Budget ID |
+| `STOCK_EXCHANGE_SUFFIX` | `.SW` | Ticker suffix (`.SW`, `.DE`, `.L`, …) |
 
-Default port is `3000`. Change via environment variable:
+---
 
-```bash
-# .env file
-WEB_PORT=8080
-```
+## API reference
 
-Then start with:
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/performance` | Portfolio with gain/loss metrics |
+| `GET` | `/api/portfolio` | Portfolio summary (no Actual Budget needed) |
+| `POST` | `/api/stocks` | Add a stock |
+| `DELETE` | `/api/stocks/:ticker` | Remove a stock |
+| `PUT` | `/api/stocks/:ticker/quantity` | Update quantity |
+| `PATCH` | `/api/stocks/:ticker` | Update purchase date / price |
+| `POST` | `/api/update-prices` | Fetch prices and sync to Actual Budget |
+| `GET` | `/api/connection` | Get current connection settings |
+| `POST` | `/api/connection` | Update connection settings |
+| `DELETE` | `/api/connection` | Reset connection settings to env defaults |
+| `GET` | `/api/budgets` | List available budgets on the Actual server |
 
-```bash
-npm run web
-```
-
-Or with Docker:
-
-```bash
-WEB_PORT=8080 docker-compose up helvetfolio-web
-```
-
-### Actual Budget Connection
-
-Configure in `.env`:
-
-```env
-ACTUAL_SERVER_URL=http://localhost:5006
-ACTUAL_PASSWORD=your-password
-ACTUAL_BUDGET_ID=your-budget-id
-```
-
-## API Endpoints
-
-The web server exposes these REST API endpoints:
-
-### GET /api/portfolio
-
-Get portfolio summary
-
-**Response**:
-
-```json
-{
-  "totalStocks": 3,
-  "stocks": [...],
-  "totalValue": 50000.00
-}
-```
-
-### GET /api/performance
-
-Get portfolio with performance metrics
-
-**Response**:
-
-```json
-{
-  "totalStocks": 3,
-  "stocks": [...],
-  "totalCostBasis": 45000.00,
-  "totalValue": 50000.00,
-  "totalGain": 5000.00,
-  "totalGainPercent": 11.11
-}
-```
-
-### POST /api/stocks
-
-Add a new stock
-
-**Request**:
-
-```json
-{
-  "ticker": "NESN",
-  "quantity": 100,
-  "purchaseDate": "2020-03-15",
-  "purchasePrice": 95.00
-}
-```
-
-### DELETE /api/stocks/:ticker
-
-Remove a stock
-
-**Example**: `/api/stocks/NESN.SW`
-
-### PUT /api/stocks/:ticker/quantity
-
-Update stock quantity
-
-**Request**:
-
-```json
-{
-  "quantity": 150
-}
-```
-
-### POST /api/update-prices
-
-Update all stock prices
-
-## Accessing from Other Devices
-
-### Same Network
-
-Find your computer's IP address:
-
-```bash
-# macOS/Linux
-ifconfig | grep inet
-
-# Windows
-ipconfig
-```
-
-Then access from other devices:
-
-```
-http://YOUR_IP:3000
-```
-
-For example: `http://192.168.1.100:3000`
-
-### Docker with Custom Port
-
-```bash
-# Map to port 8080
-WEB_PORT=8080 docker-compose up helvetfolio-web
-
-# Access at:
-http://localhost:8080
-```
-
-## Development
-
-### File Structure
-
-```
-public/
-├── index.html    # Main HTML structure
-├── styles.css    # Modern dark theme styles
-└── app.js        # Client-side JavaScript
-
-src/
-└── web-server.js # Express REST API server
-```
-
-### Customizing Styles
-
-Edit `public/styles.css` to customize:
-
-- Colors (see CSS variables at top)
-- Layout and spacing
-- Animations
-- Responsive breakpoints
-
-### Adding Features
-
-1. Add API endpoint in `src/web-server.js`
-2. Update frontend in `public/app.js`
-3. Add UI elements in `public/index.html`
-4. Style in `public/styles.css`
+---
 
 ## Troubleshooting
 
-### Port Already in Use
+**Can't connect to Actual Budget**
+- Verify Actual Budget is running and reachable
+- When running in Docker, use `host.docker.internal` instead of `localhost` in the server URL
+- Check the server URL and password in Settings
 
-```
-Error: listen EADDRINUSE: address already in use :::3000
-```
-
-**Solution**: Change port or stop other service:
-
+**Port already in use**
 ```bash
-# Use different port
-WEB_PORT=3001 npm run web
-
-# Or find and stop process on port 3000 (macOS/Linux)
-lsof -ti:3000 | xargs kill
-
-# Windows
-netstat -ano | findstr :3000
-taskkill /PID <PID> /F
+# Use a different port
+WEB_PORT=3001 docker compose up -d helvetfolio-web
 ```
 
-### Can't Connect to Actual Budget
-
-**Error**: `ECONNREFUSED` or connection timeout
-
-**Solutions**:
-
-1. Verify Actual Budget is running
-2. Check `ACTUAL_SERVER_URL` in `.env`
-3. For Docker, use `host.docker.internal` instead of `localhost`
-
-### Stocks Not Loading
-
-1. Check browser console (F12) for errors
-2. Verify portfolio.json exists
-3. Check server logs
-4. Ensure .env configuration is correct
-
-### CORS Errors
-
-If accessing from a different domain/port, the server already has CORS enabled. If still seeing errors, check browser console for specific issues.
-
-## Security Notes
-
-### Production Deployment
-
-For production use:
-
-1. **Add authentication**:
-   - Implement login system
-   - Use JWT tokens
-   - Add rate limiting
-
-2. **Use HTTPS**:
-   - Set up SSL certificate
-   - Use reverse proxy (nginx, Caddy)
-
-3. **Environment variables**:
-   - Never commit `.env` to git
-   - Use secrets management
-
-### Firewall
-
-If exposing to network:
-
-```bash
-# Allow port 3000 (macOS)
-sudo /usr/libexec/ApplicationFirewall/socketfilterfw --add /path/to/node
-
-# Or use firewall GUI settings
-```
-
-## Keyboard Shortcuts
-
-- **Esc**: Close add stock modal
-- **Enter**: Submit add stock form (when focused)
-
-## Browser Support
-
-- ✅ Chrome/Edge (recommended)
-- ✅ Firefox
-- ✅ Safari
-- ⚠️ IE11 not supported
-
-## Mobile Experience
-
-The GUI is fully responsive and works on:
-
-- 📱 Phones (iOS/Android)
-- 📟 Tablets
-- 💻 Desktops
-
-Touch gestures supported for all interactions.
-
-## Performance
-
-- Fast initial load (< 1MB total)
-- Real-time updates without page refresh
-- Optimized animations (60fps)
-- Minimal API calls
-
-## Next Steps
-
-- Add charts/graphs for performance visualization
-- Export portfolio to CSV/PDF
-- Email notifications for price alerts
-- Dark/light theme toggle
-- Multi-currency support
+**Prices not updating**
+- Click Update Prices and check the toast notification for errors
+- Verify the ticker is valid on Yahoo Finance
