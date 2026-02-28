@@ -97,6 +97,8 @@ class PortfolioManager {
         if (newConfig.serverURL) this.portfolio.settings.serverURL = newConfig.serverURL;
         if (newConfig.password) this.portfolio.settings.password = newConfig.password;
         if (newConfig.budgetId) this.portfolio.settings.budgetId = newConfig.budgetId;
+        // Allow empty string to explicitly clear the web password
+        if (newConfig.webPassword !== undefined) this.portfolio.settings.webPassword = newConfig.webPassword;
 
         // Re-initialize client and stock fetcher with potentially updated config
         this.stockFetcher = new StockFetcher(this.actualConfig.exchangeSuffix);
@@ -237,12 +239,14 @@ class PortfolioManager {
 
             if (priceData && priceData.price) {
                 const newBalance = Math.round(stock.quantity * priceData.price * 100);
+                // Mark the Yahoo Finance fetch time regardless of whether Actual succeeds
+                stock.lastPriceFetch = new Date().toISOString();
 
                 try {
                     await this.actualClient.updateAccountBalance(stock.accountId, newBalance);
 
                     stock.lastPrice = priceData.price;
-                    stock.lastUpdated = new Date().toISOString();
+                    stock.lastUpdated = new Date().toISOString(); // Actual Budget sync time
 
                     updates.push({
                         ticker: stock.ticker,
@@ -337,13 +341,21 @@ class PortfolioManager {
         const totalGain = totalValue - totalCostBasis;
         const totalGainPercent = totalCostBasis > 0 ? (totalGain / totalCostBasis) * 100 : 0;
 
+        // Helper: find the most recent timestamp across all raw stocks for a given field
+        const latestTimestamp = (field) => this.portfolio.stocks.reduce((latest, s) => {
+            if (!s[field]) return latest;
+            return !latest || new Date(s[field]) > new Date(latest) ? s[field] : latest;
+        }, null);
+
         return {
             totalStocks: stocks.length,
             stocks: stocks,
             totalCostBasis: totalCostBasis,
             totalValue: totalValue,
             totalGain: totalGain,
-            totalGainPercent: totalGainPercent
+            totalGainPercent: totalGainPercent,
+            lastYahooSync:  latestTimestamp('lastPriceFetch'), // Last successful Yahoo Finance fetch
+            lastActualSync: latestTimestamp('lastUpdated')     // Last successful Actual Budget write
         };
     }
     /**

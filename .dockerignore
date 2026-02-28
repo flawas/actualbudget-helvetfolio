@@ -13,23 +13,26 @@ portfolio.json
 .git/
 .gitignore
 
-# Documentation (not needed in container)
-README.md
-SWISS_STOCKS.md
-TROUBLESHOOTING.md
+# Tests (not needed in production image)
+tests/
 
-# IDE files
+# Documentation (not needed in container)
+*.md
+*.sh
+
+# IDE and OS files
 .vscode/
 .idea/
 *.swp
-
-# OS files
 .DS_Store
 Thumbs.db
-
-# Artifacts directory
-/Users/flaviowaser/.gemini/
 
 # Example files
 .env.example
 portfolio.example.json
+
+# CI/CD
+.github/
+
+# Claude
+.claude/

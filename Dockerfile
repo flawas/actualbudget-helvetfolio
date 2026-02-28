@@ -1,4 +1,4 @@
-# Use Node.js 20 LTS (Alpine for smaller image size)
+# Use Node.js 22 LTS (Alpine for smaller image size)
 FROM node:22-alpine
 
 # Set working directory

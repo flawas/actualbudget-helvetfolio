@@ -49,6 +49,7 @@ function setupEventListeners() {
     settingsForm.addEventListener('submit', handleSaveSettings);
     connectBtn.addEventListener('click', handleConnect);
     document.getElementById('resetSettingsBtn').addEventListener('click', handleResetConnection);
+    document.getElementById('removeWebPasswordBtn').addEventListener('click', handleRemoveWebPassword);
 
     // Close modal on outside click
     addStockModal.addEventListener('click', (e) => {
@@ -81,20 +82,35 @@ async function openSettingsModal() {
     // Reset form state
     budgetSelectGroup.style.display = 'none';
     budgetIdSelect.innerHTML = '<option value="">-- Select a Budget --</option>';
+    document.getElementById('webPassword').value = '';
 
     try {
         const response = await fetch(`${API_BASE}/api/connection`);
         const data = await response.json();
 
         document.getElementById('serverURL').value = data.serverURL || '';
-        document.getElementById('serverPassword').value = ''; // Don't show password
+        document.getElementById('serverPassword').value = '';
 
         if (data.budgetId) {
-            // If already connected, we might want to show the budget ID or even fetch list
-            // For now, let's just create an option for the current one so it's preserved
-            // unless the user reconnects.
             budgetIdSelect.innerHTML = `<option value="${data.budgetId}" selected>${data.budgetId} (Current)</option>`;
             budgetSelectGroup.style.display = 'block';
+        }
+
+        // Update web password section
+        const hint = document.getElementById('webPasswordHint');
+        const removeRow = document.getElementById('removeWebPasswordRow');
+        if (data.webPasswordFromEnv) {
+            hint.textContent = 'Password set via WEB_PASSWORD environment variable — cannot be changed here';
+            document.getElementById('webPassword').disabled = true;
+            removeRow.style.display = 'none';
+        } else if (data.hasWebPassword) {
+            hint.textContent = 'Password is set — enter a new one to change it';
+            document.getElementById('webPassword').disabled = false;
+            removeRow.style.display = 'block';
+        } else {
+            hint.textContent = 'No password set — anyone on the network can access the UI';
+            document.getElementById('webPassword').disabled = false;
+            removeRow.style.display = 'none';
         }
 
     } catch (error) {
@@ -182,17 +198,21 @@ async function handleSaveSettings(e) {
     const serverURL = document.getElementById('serverURL').value;
     const password = document.getElementById('serverPassword').value;
     const budgetId = budgetIdSelect.value;
+    const webPassword = document.getElementById('webPassword').value;
 
     if (!budgetId || budgetId === 'undefined' || budgetId === 'null') {
         showError('Please select a valid budget');
         return;
     }
 
+    // Only include webPassword when the user typed something new
+    const payload = { serverURL, password, budgetId, ...(webPassword ? { webPassword } : {}) };
+
     try {
         const response = await fetch(`${API_BASE}/api/connection`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ serverURL, password, budgetId })
+            body: JSON.stringify(payload)
         });
 
         if (!response.ok) {
@@ -202,6 +222,27 @@ async function handleSaveSettings(e) {
         showSuccess('Settings saved successfully!');
         closeSettingsModalFn();
         loadPortfolio();
+    } catch (error) {
+        showError(error.message);
+    }
+}
+
+async function handleRemoveWebPassword() {
+    if (!confirm('Remove the web UI password? The interface will be accessible without authentication.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/api/connection`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ webPassword: '' })
+        });
+
+        if (!response.ok) throw new Error('Failed to remove web password');
+
+        showSuccess('Web password removed');
+        openSettingsModal(); // Refresh the modal state
     } catch (error) {
         showError(error.message);
     }
@@ -246,8 +287,8 @@ async function loadPortfolio() {
     } catch (error) {
         showError('Failed to load portfolio: ' + error.message);
         stocksList.innerHTML = `
-            <div class="loading" style="color: var(--danger-color);">
-                ❌ Error loading portfolio
+            <div class="loading" style="color: var(--danger);">
+                Error loading portfolio
                 <br><small>${error.message}</small>
             </div>
         `;
@@ -313,7 +354,7 @@ async function handleRemoveStock(ticker) {
 async function handleUpdatePrices() {
     try {
         updatePricesBtn.disabled = true;
-        updatePricesBtn.innerHTML = '⏳ Updating...';
+        updatePricesBtn.textContent = 'Updating...';
 
         const response = await fetch(`${API_BASE}/api/update-prices`, {
             method: 'POST'
@@ -331,7 +372,7 @@ async function handleUpdatePrices() {
         showError(error.message);
     } finally {
         updatePricesBtn.disabled = false;
-        updatePricesBtn.innerHTML = '🔄 Update Prices';
+        updatePricesBtn.textContent = 'Update Prices';
     }
 }
 
@@ -345,11 +386,13 @@ function renderPortfolio() {
             </div>
         `;
         updateSummary({ totalStocks: 0, totalValue: 0, totalGain: 0, totalGainPercent: 0 });
+        updateSyncInfo(null, null);
         return;
     }
 
     // Update summary
     updateSummary(portfolio);
+    updateSyncInfo(portfolio.lastYahooSync, portfolio.lastActualSync);
 
     // Render stock cards
     stocksList.innerHTML = portfolio.stocks.map(stock => createStockCard(stock)).join('');
@@ -432,6 +475,27 @@ function updateSummary(data) {
 
     gainElement.textContent = `${gainSign}${data.totalGain.toFixed(2)} CHF (${gainSign}${data.totalGainPercent.toFixed(2)}%)`;
     gainElement.className = `summary-value ${gainClass}`;
+}
+
+function updateSyncInfo(lastYahooSync, lastActualSync) {
+    const el = document.getElementById('syncInfo');
+    if (!lastYahooSync && !lastActualSync) {
+        el.textContent = 'Prices not yet synced';
+        return;
+    }
+
+    const fmt = (iso) => {
+        if (!iso) return 'never';
+        return new Date(iso).toLocaleString('en-CH', {
+            day: 'numeric', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+    };
+
+    el.innerHTML =
+        `<span>Yahoo Finance: ${fmt(lastYahooSync)}</span>` +
+        `<span class="sync-separator">·</span>` +
+        `<span>Actual Budget: ${fmt(lastActualSync)}</span>`;
 }
 
 function showLoading() {
