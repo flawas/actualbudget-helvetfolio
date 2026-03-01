@@ -11,7 +11,7 @@
     "start": "node src/index.js",
     "daemon": "node src/index.js start-daemon",
     "web": "node src/web-server.js",
-    "test": "node --test tests/stock-fetcher.test.js tests/portfolio-manager.test.js",
+    "test": "node --test tests/stock-fetcher.test.js tests/portfolio-manager.test.js tests/actual-client.test.js tests/stock-fetcher-network.test.js",
     "test:docker": "node --test tests/docker.test.js",
     "test:all": "npm test && npm run test:docker"
   },
