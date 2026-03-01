@@ -114,6 +114,7 @@ async function openSettingsModal() {
         }
 
     } catch (error) {
+        console.error('Failed to load settings:', error);
         showError('Failed to load settings');
     }
 }

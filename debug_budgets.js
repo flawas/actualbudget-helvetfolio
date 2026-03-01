@@ -31,4 +31,9 @@ async function run() {
     }
 }
 
-run();
+try {
+    await run();
+} catch (error) {
+    console.error(error);
+    process.exit(1);
+}
