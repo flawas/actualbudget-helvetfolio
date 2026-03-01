@@ -173,7 +173,7 @@ describe('Web server', async () => {
 
     test('POST /api/connection persists settings', async () => {
         const res = await api('POST', '/api/connection', {
-            serverURL: 'http://test-actual:5006',
+            serverURL: 'http://test-actual:5006', // NOSONAR — test-only mock URL, no real connection
             password: 'testpass', // NOSONAR
             budgetId: 'test-budget-id'
         });
@@ -185,7 +185,7 @@ describe('Web server', async () => {
     test('GET /api/connection reflects persisted serverURL', async () => {
         const res = await api('GET', '/api/connection');
         const body = await res.json();
-        assert.equal(body.serverURL, 'http://test-actual:5006');
+        assert.equal(body.serverURL, 'http://test-actual:5006'); // NOSONAR — asserting the mock URL round-trips correctly
     });
 
     test('DELETE /api/connection resets settings', async () => {

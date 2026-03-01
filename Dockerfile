@@ -5,7 +5,7 @@ FROM node:22-alpine
 WORKDIR /app
 
 # Install dependencies for better-sqlite3 compilation
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache g++ make python3
 
 # Copy package files
 COPY package*.json ./
@@ -17,8 +17,10 @@ RUN npm install --only=production
 COPY src/ ./src/
 COPY public/ ./public/
 
-# Create data directory for Actual Budget
-RUN mkdir -p /app/data
+# Create data directory, set ownership, make CLI executable
+RUN mkdir -p /app/data \
+    && chown -R node:node /app/data \
+    && chmod +x /app/src/index.js
 
 # Expose web server port
 EXPOSE 3000
@@ -28,8 +30,8 @@ ENV NODE_ENV=production \
     ACTUAL_DATA_DIR=/app/data \
     PORTFOLIO_FILE=/app/data/portfolio.json
 
-# Make the CLI executable
-RUN chmod +x /app/src/index.js
+# Run as non-root user
+USER node
 
 # Set the entrypoint
 ENTRYPOINT ["node", "/app/src/index.js"]

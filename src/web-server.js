@@ -12,6 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+app.disable('x-powered-by');
 const PORT = process.env.WEB_PORT || 3000;
 
 // WEB_PASSWORD env var is a hard override. When not set, the password stored
@@ -72,7 +73,7 @@ function requireAuth(req, res, next) {
 
 // Middleware
 app.use(requireAuth);           // Auth gate (no-op when no password configured)
-app.use(cors());
+app.use(cors({ origin: /^https?:\/\/localhost(:\d+)?$/ })); // local-only server: restrict CORS to localhost
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
