@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Builds images from source — for local development.
 #
 # Usage:
@@ -8,11 +6,11 @@ version: '3.8'
 
 services:
 
-  # One-shot CLI
+  # One-shot CLI — only runs when explicitly invoked, not with `docker compose up`
   # docker compose -f docker-compose.dev.yml run --rm helvetfolio add NESN 100
   helvetfolio:
     build: .
-    container_name: helvetfolio-dev
+    profiles: ["cli"]
     environment:
       ACTUAL_SERVER_URL: ${ACTUAL_SERVER_URL:-}
       ACTUAL_PASSWORD: ${ACTUAL_PASSWORD:-}
@@ -27,7 +25,6 @@ services:
   # Background daemon — auto-syncs prices on a schedule
   helvetfolio-daemon:
     build: .
-    container_name: helvetfolio-daemon-dev
     environment:
       ACTUAL_SERVER_URL: ${ACTUAL_SERVER_URL:-}
       ACTUAL_PASSWORD: ${ACTUAL_PASSWORD:-}
@@ -43,7 +40,6 @@ services:
   # Web UI — portfolio dashboard at http://localhost:3000
   helvetfolio-web:
     build: .
-    container_name: helvetfolio-web-dev
     environment:
       ACTUAL_SERVER_URL: ${ACTUAL_SERVER_URL:-}
       ACTUAL_PASSWORD: ${ACTUAL_PASSWORD:-}

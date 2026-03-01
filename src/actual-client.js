@@ -19,6 +19,10 @@ class ActualClient {
             return;
         }
 
+        if (!this.config.serverURL) {
+            throw new Error('Actual Budget is not configured. Open Settings to set a server URL and password.');
+        }
+
         debug(`Initializing Actual Budget connection to ${this.config.serverURL}...`);
 
         try {

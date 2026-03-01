@@ -265,7 +265,19 @@ process.on('unhandledRejection', (reason) => {
 
 // Pre-load portfolio so webPassword is available for requireAuth before the
 // first request arrives (avoids a small window where auth would not be enforced).
-await manager.loadPortfolio().catch(() => {});
+// A missing file is expected on first run — it is created automatically.
+try {
+    const existed = await import('node:fs/promises')
+        .then(fs => fs.access(portfolioFile).then(() => true).catch(() => false));
+    await manager.loadPortfolio();
+    if (!existed) {
+        console.log(`📁 Created new portfolio at ${portfolioFile}`);
+    } else {
+        console.log(`📁 Loaded portfolio (${manager.portfolio.stocks.length} stock(s))`);
+    }
+} catch (err) {
+    console.warn(`⚠️  Could not load portfolio: ${err.message} — starting with empty portfolio`);
+}
 
 app.listen(PORT, () => {
     console.log(`\n🚀 Helvetfolio`);
