@@ -79,6 +79,8 @@ jobs:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: Install dependencies
         run: yarn install --frozen-lockfile
+      - name: Debug node_modules
+        run: ls node_modules/.bin
       - name: Run tests with coverage
         run: yarn coverage
       - name: SonarQube Scan
