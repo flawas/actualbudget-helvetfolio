@@ -1,8 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import PortfolioManager from './portfolio-manager.js';
 import { debug } from './logger.js';
 
@@ -109,9 +109,9 @@ app.post('/api/stocks', async (req, res) => {
 
         const options = {};
         if (purchaseDate) options.purchaseDate = purchaseDate;
-        if (purchasePrice) options.purchasePrice = parseFloat(purchasePrice);
+        if (purchasePrice) options.purchasePrice = Number.parseFloat(purchasePrice);
 
-        const stock = await manager.addStock(ticker, parseFloat(quantity), options);
+        const stock = await manager.addStock(ticker, Number.parseFloat(quantity), options);
         res.json({ success: true, stock });
     } catch (error) {
         res.status(400).json({ error: error.message });
@@ -139,7 +139,7 @@ app.put('/api/stocks/:ticker/quantity', async (req, res) => {
             return res.status(400).json({ error: 'Quantity is required' });
         }
 
-        const stock = await manager.updateQuantity(ticker, parseFloat(quantity));
+        const stock = await manager.updateQuantity(ticker, Number.parseFloat(quantity));
         res.json({ success: true, stock });
     } catch (error) {
         res.status(400).json({ error: error.message });
@@ -153,7 +153,7 @@ app.patch('/api/stocks/:ticker', async (req, res) => {
         const { purchaseDate, purchasePrice } = req.body;
         const updates = {};
         if (purchaseDate !== undefined) updates.purchaseDate = purchaseDate;
-        if (purchasePrice !== undefined) updates.purchasePrice = parseFloat(purchasePrice);
+        if (purchasePrice !== undefined) updates.purchasePrice = Number.parseFloat(purchasePrice);
         const stock = await manager.updateStockInfo(ticker, updates);
         res.json({ success: true, stock });
     } catch (error) {
@@ -175,7 +175,7 @@ app.get('/api/connection', async (req, res) => {
             hasWebPassword: !!currentWebPassword(),
             webPasswordFromEnv: !!ENV_PASSWORD  // If true, the UI setting is overridden
         });
-    } catch (error) {
+    } catch {
         res.json({ serverURL: '', hasPassword: false, budgetId: '', hasWebPassword: false, webPasswordFromEnv: false });
     }
 });
@@ -204,7 +204,7 @@ app.get('/api/budgets', async (req, res) => {
         debug('GET /api/budgets requested');
         const budgets = await withLock(async () => {
             await manager.loadPortfolio();
-            debug('Fetching budgets using config:', { ...manager.actualConfig, password: '***' });
+            debug('Fetching budgets using config:', { ...manager.actualConfig, password: '***' }); // NOSONAR
             return manager.getBudgets();
         });
         debug(`Returning ${budgets ? budgets.length : 0} budgets`);
@@ -270,10 +270,10 @@ try {
     const existed = await import('node:fs/promises')
         .then(fs => fs.access(portfolioFile).then(() => true).catch(() => false));
     await manager.loadPortfolio();
-    if (!existed) {
-        console.log(`📁 Created new portfolio at ${portfolioFile}`);
-    } else {
+    if (existed) {
         console.log(`📁 Loaded portfolio (${manager.portfolio.stocks.length} stock(s))`);
+    } else {
+        console.log(`📁 Created new portfolio at ${portfolioFile}`);
     }
 } catch (err) {
     console.warn(`⚠️  Could not load portfolio: ${err.message} — starting with empty portfolio`);

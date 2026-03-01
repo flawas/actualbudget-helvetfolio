@@ -361,13 +361,13 @@ body {
 }
 
 .gain-badge.positive {
-    background: rgba(52, 199, 89, 0.12);
-    color: #1D8348;
+    background: #E7F8EB;
+    color: #166A3A;
 }
 
 .gain-badge.negative {
-    background: rgba(255, 59, 48, 0.1);
-    color: #C0392B;
+    background: #FFECEC;
+    color: #962D22;
 }
 
 /* Loading */

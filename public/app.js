@@ -300,13 +300,13 @@ async function handleAddStock(e) {
     e.preventDefault();
 
     const ticker = document.getElementById('ticker').value.trim().toUpperCase();
-    const quantity = parseFloat(document.getElementById('quantity').value);
+    const quantity = Number.parseFloat(document.getElementById('quantity').value);
     const purchaseDate = document.getElementById('purchaseDate').value;
     const purchasePrice = document.getElementById('purchasePrice').value;
 
     const data = { ticker, quantity };
     if (purchaseDate) data.purchaseDate = purchaseDate;
-    if (purchasePrice) data.purchasePrice = parseFloat(purchasePrice);
+    if (purchasePrice) data.purchasePrice = Number.parseFloat(purchasePrice);
 
     try {
         const response = await fetch(`${API_BASE}/api/stocks`, {
@@ -497,13 +497,13 @@ async function saveCellEdit(ticker, field, newValue) {
             const response = await fetch(`${API_BASE}/api/stocks/${ticker}/quantity`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ quantity: parseFloat(newValue) })
+                body: JSON.stringify({ quantity: Number.parseFloat(newValue) })
             });
             if (!response.ok) throw new Error((await response.json()).error);
         } else {
             const body = {};
             if (field === 'purchaseDate') body.purchaseDate = newValue;
-            if (field === 'purchasePrice') body.purchasePrice = parseFloat(newValue);
+            if (field === 'purchasePrice') body.purchasePrice = Number.parseFloat(newValue);
             const response = await fetch(`${API_BASE}/api/stocks/${ticker}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },

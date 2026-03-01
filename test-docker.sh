@@ -37,7 +37,7 @@ echo "✅ Image runs successfully"
 echo ""
 
 # Create test files if they don't exist
-if [ ! -f .env ]; then
+if [[ ! -f .env ]]; then
     echo "📝 Creating .env from template..."
     cp .env.example .env
     echo "✅ Created .env file"
@@ -46,7 +46,7 @@ else
 fi
 echo ""
 
-if [ ! -f portfolio.json ]; then
+if [[ ! -f portfolio.json ]]; then
     echo "📝 Creating empty portfolio.json..."
     echo '{"stocks":[]}' > portfolio.json
     echo "✅ Created portfolio.json"

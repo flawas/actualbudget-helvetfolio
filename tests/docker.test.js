@@ -61,6 +61,15 @@ async function waitForReady(maxMs = 30_000) {
 // Build image once before all suites.
 before(ensureImage, { timeout: 180_000 });
 
+async function api(method, path, body) {
+    const opts = {
+        method,
+        headers: body ? { 'Content-Type': 'application/json' } : {}
+    };
+    if (body) opts.body = JSON.stringify(body);
+    return fetch(`${BASE_URL}${path}`, opts);
+}
+
 // ---------------------------------------------------------------------------
 // CLI
 // ---------------------------------------------------------------------------
@@ -134,15 +143,6 @@ describe('Web server', async () => {
         await rm(dataDir, { recursive: true, force: true });
     });
 
-    async function api(method, path, body) {
-        const opts = {
-            method,
-            headers: body ? { 'Content-Type': 'application/json' } : {}
-        };
-        if (body) opts.body = JSON.stringify(body);
-        return fetch(`${BASE_URL}${path}`, opts);
-    }
-
     // Portfolio
 
     test('GET /api/portfolio returns empty portfolio', async () => {
@@ -174,7 +174,7 @@ describe('Web server', async () => {
     test('POST /api/connection persists settings', async () => {
         const res = await api('POST', '/api/connection', {
             serverURL: 'http://test-actual:5006',
-            password: 'testpass',
+            password: 'testpass', // NOSONAR
             budgetId: 'test-budget-id'
         });
         assert.equal(res.status, 200);

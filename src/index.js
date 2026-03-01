@@ -18,7 +18,7 @@ const config = {
 };
 
 const portfolioFile = process.env.PORTFOLIO_FILE || './portfolio.json';
-const updateInterval = parseInt(process.env.UPDATE_INTERVAL_MINUTES || '60', 10);
+const updateInterval = Number.parseInt(process.env.UPDATE_INTERVAL_MINUTES || '60', 10);
 
 program
     .name('helvetfolio')
@@ -42,10 +42,10 @@ program
                 addOptions.purchaseDate = options.date;
             }
             if (options.price) {
-                addOptions.purchasePrice = parseFloat(options.price);
+                addOptions.purchasePrice = Number.parseFloat(options.price);
             }
 
-            const stock = await manager.addStock(ticker, parseFloat(quantity), addOptions);
+            const stock = await manager.addStock(ticker, Number.parseFloat(quantity), addOptions);
 
             console.log(chalk.green('✓ Stock added successfully!'));
             console.log(chalk.white(`  Ticker: ${stock.ticker}`));
@@ -230,7 +230,7 @@ program
         try {
             console.log(chalk.blue(`Updating quantity for ${ticker}...`));
 
-            const stock = await manager.updateQuantity(ticker, parseFloat(quantity));
+            const stock = await manager.updateQuantity(ticker, Number.parseFloat(quantity));
 
             console.log(chalk.green('✓ Quantity updated successfully!'));
             console.log(chalk.white(`  Ticker: ${stock.ticker}`));

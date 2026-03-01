@@ -46,7 +46,7 @@ class StockFetcher {
       const result = await yf.quoteSummary(formattedTicker, { modules: ['price'] });
       const quote = result.price;
 
-      if (!quote || !quote.regularMarketPrice) {
+      if (!quote?.regularMarketPrice) {
         throw new Error(`No price data available for ${formattedTicker}`);
       }
 

@@ -1,5 +1,4 @@
-import fs from 'fs/promises';
-import path from 'path';
+import fs from 'node:fs/promises';
 import StockFetcher from './stock-fetcher.js';
 import ActualClient from './actual-client.js';
 import { debug } from './logger.js';
@@ -33,12 +32,12 @@ class PortfolioManager {
                 };
 
                 // Check if config has effectively changed (simple check)
-                if (JSON.stringify(newConfig) !== JSON.stringify(this.actualConfig)) {
-                    debug('Config changed, re-initializing client with:', { ...newConfig, password: '***' });
+                if (JSON.stringify(newConfig) === JSON.stringify(this.actualConfig)) {
+                    debug('Config unchanged');
+                } else {
+                    debug('Config changed, re-initializing client with:', { ...newConfig, password: '***' }); // NOSONAR
                     this.actualConfig = newConfig;
                     this.actualClient = new ActualClient(this.actualConfig);
-                } else {
-                    debug('Config unchanged');
                 }
             } else {
                 debug('No settings in portfolio.json');
@@ -233,11 +232,10 @@ class PortfolioManager {
 
         const updates = [];
 
-        for (let i = 0; i < this.portfolio.stocks.length; i++) {
-            const stock = this.portfolio.stocks[i];
+        for (const stock of this.portfolio.stocks) {
             const priceData = prices.find(p => p.ticker === stock.ticker);
 
-            if (priceData && priceData.price) {
+            if (priceData?.price) {
                 const newBalance = Math.round(stock.quantity * priceData.price * 100);
                 // Mark the Yahoo Finance fetch time regardless of whether Actual succeeds
                 stock.lastPriceFetch = new Date().toISOString();
