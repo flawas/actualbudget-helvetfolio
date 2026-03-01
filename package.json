@@ -12,7 +12,7 @@
     "daemon": "node src/index.js start-daemon",
     "web": "node src/web-server.js",
     "test": "node --experimental-test-module-mocks --test tests/stock-fetcher.test.js tests/portfolio-manager.test.js tests/actual-client.test.js tests/stock-fetcher-network.test.js",
-    "coverage": "c8 node --test",
+    "coverage": "c8 node --experimental-test-module-mocks --test tests/stock-fetcher.test.js tests/portfolio-manager.test.js tests/actual-client.test.js tests/stock-fetcher-network.test.js",
     "test:docker": "node --test tests/docker.test.js",
     "test:all": "npm test && npm run test:docker"
   },
@@ -26,6 +26,9 @@
   ],
   "author": "",
   "license": "MIT",
+  "devDependencies": {
+    "c8": "^10.1.3"
+  },
   "dependencies": {
     "@actual-app/api": "^26.2.1",
     "chalk": "^5.3.0",
