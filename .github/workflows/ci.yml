@@ -76,12 +76,21 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 0 
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
       - name: Install dependencies
-        run: yarn
+        run: npm ci --ignore-scripts
+
       - name: Test and coverage
-        run: yarn jest --coverage
+        run: npx c8 --reporter=lcov --reports-dir=coverage npm test
+
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v7
         env:
-          SONAR_TOKEN: ${{ secrets. SONARCLOUD_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
