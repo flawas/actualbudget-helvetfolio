@@ -1,12 +1,13 @@
 import { describe, test, mock } from 'node:test';
 import assert from 'node:assert/strict';
 
-// Import the real api module and ActualClient.
-// In ESM, modules are cached singletons — both this file and actual-client.js
-// receive the exact same `api` object reference. Replacing methods on it here
-// intercepts every call made by ActualClient.
-import api from '@actual-app/api';
 import ActualClient from '../src/actual-client.js';
+
+// Module-level mock api object. setupMocks() rebuilds it before each test so
+// every test starts with fresh mock.fn instances. makeClient() always passes
+// this object to ActualClient, avoiding any need to mutate the real api module
+// (whose exports are now non-configurable getters).
+let apiMock = {};
 
 function makeClient(overrides = {}) {
     return new ActualClient({
@@ -16,12 +17,12 @@ function makeClient(overrides = {}) {
         dataDir: '/tmp/actual-test',
         exchangeSuffix: '.SW',
         ...overrides
-    });
+    }, apiMock);
 }
 
 /**
- * Replace api methods with fresh mock.fn() instances so each test starts
- * clean. Returns an object mapping method names → mock.fn instances.
+ * Replace apiMock with fresh mock.fn() instances so each test starts clean.
+ * Returns an object mapping method names → mock.fn instances.
  */
 function setupMocks(overrides = {}) {
     const defaults = {
@@ -36,13 +37,11 @@ function setupMocks(overrides = {}) {
         addTransactions: async () => {},
         deleteAccount: async () => {},
     };
-    const fns = {};
+    apiMock = {};
     for (const [k, impl] of Object.entries({ ...defaults, ...overrides })) {
-        const fn = mock.fn(impl);
-        api[k] = fn; // replaces the method on the shared singleton
-        fns[k] = fn;
+        apiMock[k] = mock.fn(impl);
     }
-    return fns;
+    return apiMock;
 }
 
 // ---------------------------------------------------------------------------

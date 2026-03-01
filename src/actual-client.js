@@ -1,12 +1,13 @@
-import api from '@actual-app/api';
+import realApi from '@actual-app/api';
 import { debug, debugWarn, debugError } from './logger.js';
 
 /**
  * Client for interacting with Actual Budget
  */
 class ActualClient {
-    constructor(config) {
+    constructor(config, api = realApi) {
         this.config = config;
+        this.api = api;
         this.initialized = false;
         this.budgetLoaded = false;
     }
@@ -26,7 +27,7 @@ class ActualClient {
         debug(`Initializing Actual Budget connection to ${this.config.serverURL}...`);
 
         try {
-            await api.init({
+            await this.api.init({
                 dataDir: this.config.dataDir,
                 serverURL: this.config.serverURL,
                 password: this.config.password
@@ -57,7 +58,7 @@ class ActualClient {
 
         try {
             debug(`Searching for budget with ID: ${this.config.budgetId}`);
-            const budgets = await api.getBudgets();
+            const budgets = await this.api.getBudgets();
             const budget = budgets.find(b =>
                 b.id === this.config.budgetId ||
                 b.syncId === this.config.budgetId ||
@@ -72,17 +73,17 @@ class ActualClient {
                 const syncId = budget.groupId;
                 if (syncId) {
                     debug(`Downloading/syncing budget via groupId ${syncId}...`);
-                    await api.downloadBudget(syncId);
+                    await this.api.downloadBudget(syncId);
                 } else if (budget.id) {
                     debug(`No sync ID available, loading local budget ${budget.id}...`);
-                    await api.loadBudget(budget.id);
+                    await this.api.loadBudget(budget.id);
                 } else {
                     throw new Error(`Cannot determine how to load budget "${budget.name}"`);
                 }
             } else {
                 // Not found in list — last resort: try the configured ID as a groupId
                 debug(`Budget not found in list, trying direct download with ${this.config.budgetId}...`);
-                await api.downloadBudget(this.config.budgetId); // works if budgetId is a groupId UUID
+                await this.api.downloadBudget(this.config.budgetId); // works if budgetId is a groupId UUID
             }
 
             this.budgetLoaded = true;
@@ -99,12 +100,12 @@ class ActualClient {
      */
     async shutdown() {
         if (this.initialized) {
-            // Always attempt api.shutdown() so the singleton is fully reset for the next
+            // Always attempt this.api.shutdown() so the singleton is fully reset for the next
             // request. When no budget was loaded the API may throw "timestamp undefined" —
             // that error is caught and swallowed; it is harmless.
             debug(`Shutting down Actual API session (budgetLoaded=${this.budgetLoaded})...`);
             try {
-                await api.shutdown();
+                await this.api.shutdown();
             } catch (error) {
                 debugWarn('Error during Actual API shutdown (expected if no budget was loaded):', error.message);
             }
@@ -120,7 +121,7 @@ class ActualClient {
      */
     async getAccounts() {
         await this.ensureBudgetLoaded();
-        return await api.getAccounts();
+        return await this.api.getAccounts();
     }
 
     /**
@@ -140,7 +141,7 @@ class ActualClient {
     async getBudgets() {
         await this.initialize();
         debug('Fetching budgets from server...');
-        const budgets = await api.getBudgets();
+        const budgets = await this.api.getBudgets();
         debug(`Found ${budgets ? budgets.length : 0} budgets`);
         if (budgets && budgets.length > 0) {
             debug('First budget object structure:', JSON.stringify(budgets[0], null, 2));
@@ -164,7 +165,7 @@ class ActualClient {
 
         try {
             // Create account with 0 balance first to avoid "timestamp undefined" error in API
-            const accountId = await api.createAccount({
+            const accountId = await this.api.createAccount({
                 name: accountName,
                 type: 'investment',
                 offbudget: true
@@ -195,14 +196,14 @@ class ActualClient {
 
         try {
             // Get current balance
-            const transactions = await api.getTransactions(accountId, null, null);
+            const transactions = await this.api.getTransactions(accountId, null, null);
             const currentBalance = transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
 
             const difference = Math.round(newBalance) - currentBalance;
 
             if (difference !== 0) {
                 // Create adjustment transaction
-                await api.addTransactions(accountId, [{
+                await this.api.addTransactions(accountId, [{
                     date: new Date().toISOString().split('T')[0],
                     amount: difference,
                     payee_name: 'Market Value Adjustment',
@@ -222,7 +223,7 @@ class ActualClient {
      */
     async deleteAccount(accountId) {
         await this.ensureBudgetLoaded();
-        await api.deleteAccount(accountId);
+        await this.api.deleteAccount(accountId);
     }
 
     /**
@@ -233,7 +234,7 @@ class ActualClient {
     async getAccountBalance(accountId) {
         await this.ensureBudgetLoaded();
 
-        const transactions = await api.getTransactions(accountId, null, null);
+        const transactions = await this.api.getTransactions(accountId, null, null);
         return transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
     }
 }
