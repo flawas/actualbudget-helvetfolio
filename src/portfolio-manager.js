@@ -44,9 +44,10 @@ class PortfolioManager {
             }
         } catch (error) {
             if (error.code === 'ENOENT') {
-                // File doesn't exist, start with empty portfolio
+                // File doesn't exist — start with empty portfolio in memory.
+                // The file is created lazily on the first write (addStock, updateConfig, etc.)
+                // so the container can run without a mounted volume.
                 this.portfolio = { stocks: [] };
-                await this.savePortfolio();
             } else {
                 throw new Error(`Failed to load portfolio: ${error.message}`);
             }

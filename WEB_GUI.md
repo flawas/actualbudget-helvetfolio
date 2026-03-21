@@ -4,29 +4,33 @@ Portfolio dashboard for managing your holdings and syncing with Actual Budget.
 
 ---
 
-## Installation
-
-### Docker (recommended)
-
-```bash
-docker pull flawas/helvetfolio:latest
-# or: docker pull ghcr.io/flawas/helvetfolio:latest
-
-docker run -d \
-  --name helvetfolio-web \
-  -p 3000:3000 \
-  --env-file .env \
-  -v $(pwd)/data:/app/data \
-  -v $(pwd)/portfolio.json:/app/portfolio.json \
-  --entrypoint node \
-  flawas/helvetfolio:latest /app/src/web-server.js
-```
+## Starting the Web UI
 
 ### Docker Compose
 
 ```bash
 docker compose up -d helvetfolio-web
 ```
+
+### Docker run
+
+```bash
+docker run -d \
+  --name helvetfolio-web \
+  -p 3000:3000 \
+  -v $(pwd)/data:/app/data \
+  -e MODE=web \
+  ghcr.io/flawas/helvetfolio:latest
+```
+
+### Docker Desktop GUI
+
+1. Pull or build the image
+2. **Images** → **Run** → **Optional settings**:
+   - Port: `3000` → `3000`
+   - Volume: `./data` → `/app/data`
+   - Env: `MODE` = `web`
+3. Click **Run**
 
 Open **http://localhost:3000** in your browser.
 
@@ -59,13 +63,13 @@ Click **Settings** to configure:
 - Actual Budget server URL, password, and budget selection
 - Web UI password (HTTP Basic Auth)
 
-No restart required — settings take effect immediately.
+No restart required — settings take effect immediately and are persisted to the `./data` directory.
 
 ---
 
 ## Password protection
 
-To restrict access to the web UI, set a password in the Settings modal or via environment variable:
+Set a password in the Settings modal or via environment variable:
 
 ```env
 WEB_PASSWORD=your-secret
@@ -97,6 +101,7 @@ Find your host IP and open `http://<IP>:3000` from any device on the same networ
 
 | Variable | Default | Description |
 |---|---|---|
+| `MODE` | `cli` | Set to `web` to start the web server |
 | `WEB_PORT` | `3000` | Listening port |
 | `WEB_PASSWORD` | — | HTTP Basic Auth password |
 | `ACTUAL_SERVER_URL` | — | Actual Budget server URL |
@@ -133,7 +138,6 @@ Find your host IP and open `http://<IP>:3000` from any device on the same networ
 
 **Port already in use**
 ```bash
-# Use a different port
 WEB_PORT=3001 docker compose up -d helvetfolio-web
 ```
 

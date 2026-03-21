@@ -1,40 +1,37 @@
-# Use Node.js 22 LTS (Alpine for smaller image size)
-FROM node:22-alpine
+# ── Stage 1: build native addons ─────────────────────────────────────────────
+FROM node:22-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Install dependencies for better-sqlite3 compilation
 RUN apk add --no-cache g++ make python3
 
-# Copy package files
 COPY package*.json ./
+RUN npm install --omit=dev
 
-# Install dependencies
-RUN npm install --only=production
+# ── Stage 2: runtime image ────────────────────────────────────────────────────
+FROM node:22-alpine
 
-# Copy application source
+WORKDIR /app
+
+# Copy only production node_modules from builder (no build tools in final image)
+COPY --from=builder /app/node_modules ./node_modules
+
 COPY src/ ./src/
 COPY public/ ./public/
+COPY docker-entrypoint.sh ./
 
-# Create data directory, set ownership, make CLI executable
 RUN mkdir -p /app/data \
     && chown -R node:node /app/data \
-    && chmod +x /app/src/index.js
+    && chmod +x /app/src/index.js /app/docker-entrypoint.sh
 
-# Expose web server port
 EXPOSE 3000
 
-# Set environment variables with defaults
 ENV NODE_ENV=production \
     ACTUAL_DATA_DIR=/app/data \
-    PORTFOLIO_FILE=/app/data/portfolio.json
+    PORTFOLIO_FILE=/app/data/portfolio.json \
+    MODE=cli
 
-# Run as non-root user
 USER node
 
-# Set the entrypoint
-ENTRYPOINT ["node", "/app/src/index.js"]
-
-# Default command (list portfolio)
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["list"]

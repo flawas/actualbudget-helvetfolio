@@ -1,98 +1,96 @@
-# Installation Troubleshooting Guide
+# Troubleshooting
 
-## better-sqlite3 Compilation Issues on macOS
+## Container exits immediately
 
-If you encounter errors like `'climits' file not found` when running `npm install`, this is due to native compilation issues with the `better-sqlite3` dependency.
+**Cause**: The default `MODE` is `cli`, which runs `list` and exits. That is expected for a one-shot CLI command.
 
-### Solution 1: Use Node.js LTS (Recommended)
-
-The easiest solution is to use a Node.js LTS version (20.x) which has better native module support:
+**Fix**: Set `MODE=web` or `MODE=daemon` for long-running services.
 
 ```bash
-# Using nvm (Node Version Manager)
-nvm install 20
-nvm use 20
+docker run -d -p 3000:3000 -e MODE=web ghcr.io/flawas/helvetfolio:latest
+```
 
-# Or using brew
-brew install node@20
-brew link node@20
+---
 
-# Then reinstall dependencies
+## better-sqlite3 compilation errors on macOS (`'climits' file not found`)
+
+This happens with Node.js v23+ or mismatched Xcode tools.
+
+**Solution 1 — Use Node 22 LTS (recommended)**
+
+```bash
+nvm install 22 && nvm use 22
 rm -rf node_modules package-lock.json
 npm install
 ```
 
-### Solution 2: Install via Prebuilt Binaries
-
-Try setting the npm configuration to prefer prebuilt binaries:
+**Solution 2 — Update Xcode command line tools**
 
 ```bash
-npm config set build_from_source false
-npm install --prefer-offline
-```
-
-### Solution 3: Update XCode Command Line Tools
-
-Ensure your XCode command line tools are up to date:
-
-```bash
-# Update via Software Update
-softwareupdate --list
-softwareupdate --install -a
-
-# Or reinstall XCode CLI tools
 sudo rm -rf /Library/Developer/CommandLineTools
 xcode-select --install
 ```
 
-### Solution 4: Set C++ Compiler Flags
-
-Sometimes setting specific compiler flags helps:
+**Solution 3 — Use Docker (avoids native compilation entirely)**
 
 ```bash
-export CXXFLAGS="-std=c++17"
-npm install
+docker build -t helvetfolio:local .
+docker run -d -p 3000:3000 -e MODE=web helvetfolio:local
 ```
 
-### Solution 5: Use Docker (Alternative Approach)
+---
 
-If native compilation continues to fail, you can run the extension in Docker:
+## Can't connect to Actual Budget
 
-1. Create a `Dockerfile`:
+**Symptoms**: `ECONNREFUSED`, connection timeout, or "Connection failed" in the web UI.
 
-```dockerfile
-FROM node:20-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-CMD ["npm", "start"]
-```
+**Fixes**:
 
-1. Build and run:
+- When Actual Budget runs on the host machine, use `http://host.docker.internal:5006` (not `localhost`)
+- Verify Actual Budget is running: `curl http://localhost:5006`
+- Check the server URL and password in **Settings**
+
+---
+
+## Port already in use
 
 ```bash
-docker build -t helvetfolio .
-docker run -it --env-file .env helvetfolio list
+WEB_PORT=3001 docker compose up -d helvetfolio-web
 ```
+
+---
+
+## Data not persisting between container restarts
+
+Mount the `./data` directory:
+
+```bash
+docker run -d -p 3000:3000 -e MODE=web \
+  -v $(pwd)/data:/app/data \
+  ghcr.io/flawas/helvetfolio:latest
+```
+
+Check the mount is in place:
+
+```bash
+docker inspect helvetfolio-web | grep -A5 Mounts
+```
+
+---
+
+## Prices not updating
+
+- Click **Update Prices** in the web UI and read the toast notification
+- Verify the ticker is valid on Yahoo Finance (e.g. `NESN.SW`)
+- Check logs: `docker compose logs -f helvetfolio-web`
+
+---
 
 ## Verification
 
-After successful installation, verify with:
+After setup, `list` should print `Portfolio is empty` (not an error):
 
 ```bash
-npm start list
+docker run --rm ghcr.io/flawas/helvetfolio:latest list
+# → Portfolio is empty
 ```
-
-You should see "Portfolio is empty" if everything is working correctly.
-
-## Still Having Issues?
-
-1. Check Node.js version: `node --version` (should be v18+ but v20 is recommended)
-2. Check npm version: `npm --version`
-3. Check Python version (required for node-gyp): `python3 --version`
-4. Review npm error logs: `~/.npm/_logs/*.log`
-
-## Alternative: Local-Only Mode
-
-If you only want to track prices without Actual Budget integration, you can create a simpler version that just fetches and displays stock prices without the database dependency. Let me know if you'd like this alternative implementation.

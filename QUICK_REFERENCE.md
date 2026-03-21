@@ -1,102 +1,74 @@
-# Quick Reference: Helvetfolio Commands
+# Quick Reference
 
-## Basic Commands
-
-### Add Stock
+## Docker Compose
 
 ```bash
-# Current price
-npm start add NESN 100
+# Start web UI
+docker compose up -d helvetfolio-web
 
-# Historical purchase (e.g., from 2020)
-npm start add NESN 100 --date 2020-03-15 --price 95.00
+# Start daemon (background sync)
+docker compose up -d helvetfolio-daemon
+
+# Stop everything
+docker compose down
+
+# View logs
+docker compose logs -f helvetfolio-web
 ```
 
-### View Portfolio
+## CLI via Docker
+
+```bash
+docker compose run --rm helvetfolio list
+docker compose run --rm helvetfolio performance
+docker compose run --rm helvetfolio update
+docker compose run --rm helvetfolio add NESN 100
+docker compose run --rm helvetfolio add NESN 100 --date 2020-03-15 --price 95.00
+docker compose run --rm helvetfolio remove NESN
+docker compose run --rm helvetfolio set-quantity NESN 150
+```
+
+## CLI via npm (local dev)
 
 ```bash
 npm start list
-```
-
-### View Performance (Gains/Losses)
-
-```bash
 npm start performance
-```
-
-### Update Prices
-
-```bash
 npm start update
-```
-
-### Remove Stock
-
-```bash
-npm start remove NESN
-```
-
-### Update Quantity
-
-```bash
-npm start set-quantity NESN 150
-```
-
-### Run Daemon (Auto-updates)
-
-```bash
+npm start -- add NESN 100 --date 2020-03-15 --price 95.00
+npm start -- remove NESN
+npm start -- set-quantity NESN 150
 npm run daemon
+npm run web
 ```
 
-## Docker Commands
-
-Just prefix with `docker-compose run --rm helvetfolio`:
+## Building Locally
 
 ```bash
-# Add stock
-docker-compose run --rm helvetfolio add NESN 100 --date 2020-03-15 --price 95.00
-
-# View performance
-docker-compose run --rm helvetfolio performance
-
-# Update prices
-docker-compose run --rm helvetfolio update
-
-# Start daemon
-docker-compose up -d helvetfolio-daemon
+docker build -t helvetfolio:local .
+docker run -d -p 3000:3000 -e MODE=web helvetfolio:local
+docker run --rm helvetfolio:local list
 ```
+
+## Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `MODE` | `cli` | `web`, `daemon`, or `cli` |
+| `ACTUAL_SERVER_URL` | — | Actual Budget server URL |
+| `ACTUAL_PASSWORD` | — | Actual Budget password |
+| `ACTUAL_BUDGET_ID` | — | Budget ID |
+| `UPDATE_INTERVAL_MINUTES` | `60` | Daemon sync interval |
+| `WEB_PORT` | `3000` | Web UI port |
+| `WEB_PASSWORD` | — | HTTP Basic Auth password |
+| `STOCK_EXCHANGE_SUFFIX` | `.SW` | Ticker suffix |
 
 ## Common Swiss Stocks
 
 | Stock | Ticker | Sector |
-|-------|--------|--------|
+|---|---|---|
 | Nestlé | NESN | Consumer |
 | Novartis | NOVN | Pharma |
 | Roche | ROG | Pharma |
 | UBS | UBSG | Bank |
 | Zurich Insurance | ZURN | Insurance |
 | ABB | ABBN | Industrial |
-
-## Configuration
-
-Edit `.env`:
-
-```env
-ACTUAL_SERVER_URL=http://localhost:5006
-ACTUAL_PASSWORD=your-password
-ACTUAL_BUDGET_ID=your-budget-id
-UPDATE_INTERVAL_MINUTES=60
-```
-
-## Files
-
-- `portfolio.json` - Your stock holdings
-- `data/` - Actual Budget local data
-- `.env` - Configuration
-
-## Help
-
-```bash
-npm start --help
-npm start add --help
-```

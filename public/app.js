@@ -28,8 +28,22 @@ const budgetIdSelect = document.getElementById('budgetId');
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     loadPortfolio();
+    updateAddStockButtonState();
     setupEventListeners();
 });
+
+async function updateAddStockButtonState() {
+    try {
+        const response = await fetch(`${API_BASE}/api/connection`);
+        const data = await response.json();
+        const configured = !!data.serverURL;
+        addStockBtn.disabled = !configured;
+        addStockBtn.title = configured ? '' : 'Configure Actual Budget connection in Settings first';
+    } catch {
+        addStockBtn.disabled = true;
+        addStockBtn.title = 'Configure Actual Budget connection in Settings first';
+    }
+}
 
 // Event Listeners
 function setupEventListeners() {
@@ -223,6 +237,7 @@ async function handleSaveSettings(e) {
         showSuccess('Settings saved successfully!');
         closeSettingsModalFn();
         loadPortfolio();
+        updateAddStockButtonState();
     } catch (error) {
         showError(error.message);
     }
@@ -265,6 +280,7 @@ async function handleResetConnection() {
 
         showSuccess('Connection settings reset successfully!');
         closeSettingsModalFn();
+        updateAddStockButtonState();
 
         // Re-open modal to show fresh state (defaults from env)
         setTimeout(() => openSettingsModal(), 500);

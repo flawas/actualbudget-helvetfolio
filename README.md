@@ -11,7 +11,7 @@ Prices are fetched from Yahoo Finance and written to a dedicated Actual Budget a
 
 ## Quick start
 
-No configuration required to start. Connection settings are configured through the web UI and persisted to the `./data` directory.
+No configuration file required. Connection settings are configured through the web UI and persisted to the `./data` directory.
 
 ### With Docker Compose (recommended)
 
@@ -21,23 +21,30 @@ docker compose up -d helvetfolio-web
 
 Open **http://localhost:3000** and configure your Actual Budget connection in **Settings**.
 
-### With Docker run
+### With docker run
 
 ```bash
-docker pull flawas/helvetfolio:latest
-# or: docker pull ghcr.io/flawas/helvetfolio:latest
+docker pull ghcr.io/flawas/helvetfolio:latest
 
 docker run -d \
   --name helvetfolio-web \
   -p 3000:3000 \
   -v $(pwd)/data:/app/data \
-  -e PORTFOLIO_FILE=/app/data/portfolio.json \
-  -e ACTUAL_DATA_DIR=/app/data \
-  --entrypoint node \
-  flawas/helvetfolio:latest /app/src/web-server.js
+  -e MODE=web \
+  ghcr.io/flawas/helvetfolio:latest
 ```
 
 Open **http://localhost:3000** in your browser.
+
+### With Docker Desktop GUI
+
+1. Pull `ghcr.io/flawas/helvetfolio:latest`
+2. **Images** → find the image → **Run**
+3. Expand **Optional settings**:
+   - **Ports**: `3000` → `3000`
+   - **Volumes**: host path `./data` → container path `/app/data`
+   - **Environment variables**: `MODE` = `web`
+4. Click **Run**
 
 ---
 
@@ -69,37 +76,35 @@ docker compose -f docker-compose.dev.yml up -d helvetfolio-web
 
 ---
 
-## Services
+## Start modes
 
-Three entry points are available from the same image:
+The image is controlled via the `MODE` environment variable:
 
-| Service | Description | Command |
+| `MODE` | What runs | Use case |
 |---|---|---|
-| **Web UI** | Portfolio dashboard at `:3000` | `node /app/src/web-server.js` |
-| **Daemon** | Background price sync (cron) | `helvetfolio start-daemon` |
-| **CLI** | One-shot commands | `helvetfolio <command>` |
+| `web` (recommended) | Web UI on port 3000 | Always-on dashboard |
+| `daemon` | Background price sync | Scheduled updates without the UI |
+| `cli` (default) | One-shot CLI command | Manual operations |
 
-### CLI commands
+---
+
+## CLI commands
 
 ```bash
 # With Docker Compose
 docker compose run --rm helvetfolio <command>
 
-# With docker run
-docker run --rm \
-  -v $(pwd)/data:/app/data \
-  -e PORTFOLIO_FILE=/app/data/portfolio.json \
-  -e ACTUAL_DATA_DIR=/app/data \
-  flawas/helvetfolio:latest <command>
+# With docker run (no volume = ephemeral; add -v $(pwd)/data:/app/data to persist)
+docker run --rm ghcr.io/flawas/helvetfolio:latest <command>
 ```
 
 | Command | Description |
 |---|---|
-| `add <ticker> <qty>` | Add a stock to the portfolio |
-| `remove <ticker>` | Remove a stock |
-| `update-quantity <ticker> <qty>` | Update share count |
-| `update-prices` | Fetch latest prices and sync to Actual Budget |
 | `list` | List all stocks |
+| `add <ticker> <qty>` | Add a stock |
+| `remove <ticker>` | Remove a stock |
+| `set-quantity <ticker> <qty>` | Update share count |
+| `update` | Fetch latest prices and sync to Actual Budget |
 | `performance` | Show gains/losses |
 | `start-daemon` | Run continuous background sync |
 
@@ -113,17 +118,18 @@ Environment variables can also be used to pre-configure or override settings:
 
 | Variable | Default | Description |
 |---|---|---|
+| `MODE` | `cli` | Start mode: `web`, `daemon`, or `cli` |
 | `ACTUAL_SERVER_URL` | — | Actual Budget server URL |
 | `ACTUAL_PASSWORD` | — | Actual Budget server password |
 | `ACTUAL_BUDGET_ID` | — | Budget ID (Settings → Advanced) |
-| `ACTUAL_DATA_DIR` | `./data` | Local cache directory |
+| `ACTUAL_DATA_DIR` | `/app/data` | Local cache directory |
 | `STOCK_EXCHANGE_SUFFIX` | `.SW` | Exchange suffix for tickers (`.SW`, `.DE`, `.L`, …) |
 | `UPDATE_INTERVAL_MINUTES` | `60` | Sync interval in daemon mode |
-| `PORTFOLIO_FILE` | `./data/portfolio.json` | Portfolio data file |
+| `PORTFOLIO_FILE` | `/app/data/portfolio.json` | Portfolio data file |
 | `WEB_PORT` | `3000` | Web UI port |
 | `WEB_PASSWORD` | — | Enables HTTP Basic Auth on the web UI |
 
-All data (portfolio, connection settings, Actual Budget cache) is stored in the single `./data` directory.
+All data (portfolio, connection settings, Actual Budget cache) is stored in the single `./data` directory. No pre-configuration needed — the portfolio file is created automatically on first use.
 
 ---
 
@@ -137,9 +143,25 @@ All data (portfolio, connection settings, Actual Budget cache) is stored in the 
 
 ---
 
+## Building locally
+
+```bash
+# Build image
+docker build -t helvetfolio:local .
+
+# Run web UI
+docker run -d -p 3000:3000 -e MODE=web helvetfolio:local
+
+# Run CLI
+docker run --rm helvetfolio:local list
+```
+
+---
+
 ## Docs
 
 - [Web UI guide](WEB_GUI.md)
+- [Docker deployment](DOCKER.md)
 - [Stock ticker reference](SWISS_STOCKS.md)
 
 ---

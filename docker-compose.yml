@@ -2,7 +2,6 @@
 # No local build required. No .env file needed to start.
 #
 # Pull:
-#   docker pull flawas/helvetfolio:latest
 #   docker pull ghcr.io/flawas/helvetfolio:latest
 #
 # Usage:
@@ -14,7 +13,7 @@ services:
   # One-shot CLI — only runs when explicitly invoked, not with `docker compose up`
   # docker compose run --rm helvetfolio add NESN 100
   helvetfolio:
-    image: flawas/helvetfolio:latest
+    image: ghcr.io/flawas/helvetfolio:latest
     profiles: ["cli"]
     environment:
       ACTUAL_SERVER_URL: ${ACTUAL_SERVER_URL:-}
@@ -29,8 +28,9 @@ services:
 
   # Background daemon — auto-syncs prices on a schedule
   helvetfolio-daemon:
-    image: flawas/helvetfolio:latest
+    image: ghcr.io/flawas/helvetfolio:latest
     environment:
+      MODE: daemon
       ACTUAL_SERVER_URL: ${ACTUAL_SERVER_URL:-}
       ACTUAL_PASSWORD: ${ACTUAL_PASSWORD:-}
       ACTUAL_BUDGET_ID: ${ACTUAL_BUDGET_ID:-}
@@ -39,13 +39,13 @@ services:
       PORTFOLIO_FILE: /app/data/portfolio.json
     volumes:
       - ./data:/app/data
-    command: start-daemon
     restart: unless-stopped
 
   # Web UI — portfolio dashboard at http://localhost:3000
   helvetfolio-web:
-    image: flawas/helvetfolio:latest
+    image: ghcr.io/flawas/helvetfolio:latest
     environment:
+      MODE: web
       ACTUAL_SERVER_URL: ${ACTUAL_SERVER_URL:-}
       ACTUAL_PASSWORD: ${ACTUAL_PASSWORD:-}
       ACTUAL_BUDGET_ID: ${ACTUAL_BUDGET_ID:-}
@@ -57,6 +57,4 @@ services:
       - ./data:/app/data
     ports:
       - "${WEB_PORT:-3000}:3000"
-    entrypoint: ["node"]
-    command: ["/app/src/web-server.js"]
     restart: unless-stopped

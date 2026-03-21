@@ -18,7 +18,6 @@ tests/
 
 # Documentation (not needed in container)
 *.md
-*.sh
 
 # IDE and OS files
 .vscode/

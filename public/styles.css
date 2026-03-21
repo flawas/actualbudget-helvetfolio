@@ -48,8 +48,17 @@ body {
     font-size: 2rem;
     font-weight: 700;
     letter-spacing: -0.03em;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     color: var(--text-primary);
     margin-bottom: 4px;
+}
+
+.logo-icon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
 }
 
 .subtitle {
@@ -166,6 +175,14 @@ body {
 .btn-primary:active {
     background: #005EC3;
     transform: scale(0.98);
+}
+
+.btn-primary:disabled {
+    background: var(--text-secondary, #8E8E93);
+    box-shadow: none;
+    cursor: not-allowed;
+    opacity: 0.55;
+    transform: none;
 }
 
 .btn-secondary {

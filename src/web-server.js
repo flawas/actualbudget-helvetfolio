@@ -266,7 +266,7 @@ process.on('unhandledRejection', (reason) => {
 
 // Pre-load portfolio so webPassword is available for requireAuth before the
 // first request arrives (avoids a small window where auth would not be enforced).
-// A missing file is expected on first run — it is created automatically.
+// A missing file is not an error — the portfolio starts empty and is created on first write.
 try {
     const existed = await import('node:fs/promises')
         .then(fs => fs.access(portfolioFile).then(() => true).catch(() => false));
@@ -274,7 +274,7 @@ try {
     if (existed) {
         console.log(`📁 Loaded portfolio (${manager.portfolio.stocks.length} stock(s))`);
     } else {
-        console.log(`📁 Created new portfolio at ${portfolioFile}`);
+        console.log(`📁 No portfolio file found — starting empty (will be created on first save)`);
     }
 } catch (err) {
     console.warn(`⚠️  Could not load portfolio: ${err.message} — starting with empty portfolio`);

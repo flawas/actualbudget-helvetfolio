@@ -203,14 +203,17 @@ describe('loadPortfolio', () => {
     await rm(tmpDir, { recursive: true, force: true });
   });
 
-  test('creates empty portfolio and saves when file does not exist', async () => {
+  test('starts with empty portfolio in memory when file does not exist', async () => {
     const portfolioFile = join(tmpDir, 'new.json');
     const manager = new PortfolioManager(portfolioFile, { exchangeSuffix: '.SW' });
     await manager.loadPortfolio();
 
     assert.deepEqual(manager.portfolio.stocks, []);
-    const saved = JSON.parse(await readFile(portfolioFile, 'utf-8'));
-    assert.deepEqual(saved, { stocks: [] });
+    // File must NOT be created eagerly — it is written on the first mutation
+    await assert.rejects(
+      () => readFile(portfolioFile, 'utf-8'),
+      { code: 'ENOENT' }
+    );
   });
 
   test('reads existing portfolio from file', async () => {

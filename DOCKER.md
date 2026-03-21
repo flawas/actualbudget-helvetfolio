@@ -1,432 +1,192 @@
 # Docker Deployment Guide
 
-Complete guide for running the Helvetfolio as a Docker container.
-
 ## Quick Start
 
-### 1. Setup Configuration
+### Web UI (recommended)
 
 ```bash
-# Copy environment template
-cp .env.example .env
-
-# Edit .env with your settings
-nano .env
+docker compose up -d helvetfolio-web
 ```
 
-Required variables in `.env`:
+Open **http://localhost:3000**. No pre-configuration needed — connection settings are saved through the web UI.
 
-```env
-ACTUAL_SERVER_URL=http://host.docker.internal:5006
-ACTUAL_PASSWORD=your-password
-ACTUAL_BUDGET_ID=your-budget-id
-UPDATE_INTERVAL_MINUTES=60
-```
+### Docker Desktop GUI
 
-> [!NOTE]
-> Use `host.docker.internal` instead of `localhost` to connect to Actual Budget running on your host machine.
+1. Pull `ghcr.io/flawas/helvetfolio:latest` or build locally (`docker build -t helvetfolio:local .`)
+2. **Images** → find the image → **Run**
+3. Expand **Optional settings**:
+   - **Ports**: `3000` → `3000`
+   - **Volumes**: host path `./data` → container path `/app/data`
+   - **Environment variables**: `MODE` = `web`
+4. Click **Run**
 
-### 2. Initialize Portfolio
+---
+
+## Start Modes
+
+The image behaviour is controlled by the `MODE` environment variable:
+
+| `MODE` | What runs | Command |
+|---|---|---|
+| `web` | Web UI on `:3000` | `docker run -e MODE=web ...` |
+| `daemon` | Background price sync | `docker run -e MODE=daemon ...` |
+| `cli` (default) | One-shot CLI | `docker run ... list` |
+
+---
+
+## Running with docker run
+
+### Web UI
 
 ```bash
-# Create empty portfolio file
-echo '{"stocks":[]}' > portfolio.json
-
-# Create data directory
-mkdir -p data
-```
-
-### 3. Build the Image
-
-```bash
-docker-compose build
-```
-
-## Usage
-
-### Interactive Commands
-
-#### Add a Stock
-
-```bash
-docker-compose run --rm helvetfolio add NESN 100
-```
-
-#### Remove a Stock
-
-```bash
-docker-compose run --rm helvetfolio remove NESN
-```
-
-#### Update All Prices
-
-```bash
-docker-compose run --rm helvetfolio update
-```
-
-#### List Portfolio
-
-```bash
-docker-compose run --rm helvetfolio list
-```
-
-#### Update Stock Quantity
-
-```bash
-docker-compose run --rm helvetfolio set-quantity NESN 150
-```
-
-### Daemon Mode (Continuous Updates)
-
-Start the daemon service to automatically update prices every hour (or your configured interval):
-
-```bash
-docker-compose up -d helvetfolio-daemon
-```
-
-View logs:
-
-```bash
-docker-compose logs -f helvetfolio-daemon
-```
-
-Stop daemon:
-
-```bash
-docker-compose down
-```
-
-## Alternative: Direct Docker Commands
-
-If you prefer not to use docker-compose:
-
-### Build
-
-```bash
-docker build -t helvetfolio .
-```
-
-### Run Commands
-
-```bash
-# Add stock
-docker run --rm \
-  --env-file .env \
+docker run -d \
+  --name helvetfolio-web \
+  -p 3000:3000 \
   -v $(pwd)/data:/app/data \
-  -v $(pwd)/portfolio.json:/app/portfolio.json \
-  helvetfolio add NESN 100
-
-# List portfolio
-docker run --rm \
-  --env-file .env \
-  -v $(pwd)/data:/app/data \
-  -v $(pwd)/portfolio.json:/app/portfolio.json \
-  helvetfolio list
-
-# Update prices
-docker run --rm \
-  --env-file .env \
-  -v $(pwd)/data:/app/data \
-  -v $(pwd)/portfolio.json:/app/portfolio.json \
-  helvetfolio update
+  -e MODE=web \
+  ghcr.io/flawas/helvetfolio:latest
 ```
 
-### Run Daemon
+### Daemon
 
 ```bash
 docker run -d \
   --name helvetfolio-daemon \
-  --env-file .env \
   -v $(pwd)/data:/app/data \
-  -v $(pwd)/portfolio.json:/app/portfolio.json \
+  -e MODE=daemon \
+  -e UPDATE_INTERVAL_MINUTES=60 \
   --restart unless-stopped \
-  helvetfolio start-daemon
+  ghcr.io/flawas/helvetfolio:latest
 ```
 
-## Environment Variable Injection
-
-### Method 1: .env File (Recommended)
-
-Create `.env` file:
-
-```env
-ACTUAL_SERVER_URL=http://host.docker.internal:5006
-ACTUAL_PASSWORD=mypassword
-ACTUAL_BUDGET_ID=my-budget-123
-UPDATE_INTERVAL_MINUTES=60
-```
-
-Docker Compose automatically loads this file.
-
-### Method 2: Override in docker-compose.yml
-
-Edit `docker-compose.yml` and modify the `environment` section:
-
-```yaml
-environment:
-  ACTUAL_SERVER_URL: http://my-server:5006
-  ACTUAL_PASSWORD: mypassword
-  ACTUAL_BUDGET_ID: my-budget-123
-```
-
-### Method 3: Command Line Override
+### CLI (one-shot)
 
 ```bash
-ACTUAL_SERVER_URL=http://example.com:5006 \
-ACTUAL_PASSWORD=secret \
-docker-compose run helvetfolio list
+# No volume = ephemeral (data lost on stop)
+docker run --rm ghcr.io/flawas/helvetfolio:latest list
+
+# With persistent data
+docker run --rm \
+  -v $(pwd)/data:/app/data \
+  ghcr.io/flawas/helvetfolio:latest add NESN 100
 ```
 
-### Method 4: Separate Environment File
+---
+
+## Running with Docker Compose
 
 ```bash
-docker-compose --env-file .env.production run helvetfolio list
+# Web UI
+docker compose up -d helvetfolio-web
+
+# Daemon
+docker compose up -d helvetfolio-daemon
+
+# One-shot CLI
+docker compose run --rm helvetfolio list
+docker compose run --rm helvetfolio add NESN 100
+docker compose run --rm helvetfolio performance
 ```
 
-## Volume Mounts
+---
 
-### Local Directories
+## Building Locally
 
-- `./data` → `/app/data` - Actual Budget local data
-- `./portfolio.json` → `/app/portfolio.json` - Your stock portfolio
-
-### Custom Paths
-
-To use custom paths, modify `docker-compose.yml`:
-
-```yaml
-volumes:
-  - /path/to/my/data:/app/data
-  - /path/to/my/portfolio.json:/app/portfolio.json
+```bash
+docker build -t helvetfolio:local .
 ```
+
+The Dockerfile uses a multi-stage build — build tools (`g++`, `make`, `python3`) are stripped from the final image, keeping it at ~235 MB.
+
+To use the locally built image with compose:
+
+```bash
+docker compose -f docker-compose.dev.yml up -d helvetfolio-web
+```
+
+---
+
+## Data & Volumes
+
+All data lives in a single directory:
+
+| Host path | Container path | Contents |
+|---|---|---|
+| `./data` | `/app/data` | Portfolio file, Actual Budget cache, settings |
+
+The portfolio file (`/app/data/portfolio.json`) is created automatically on first write. No pre-setup required — you can run the container with no volume and it will start with an empty in-memory portfolio.
+
+### Backup
+
+```bash
+# Portfolio + settings
+cp -r data/ data-backup-$(date +%Y%m%d)/
+
+# Or just the portfolio file
+cp data/portfolio.json portfolio.backup.json
+```
+
+---
+
+## Configuration
+
+Connection settings are saved through the **Settings** modal in the web UI. Environment variables can be used to pre-configure or override:
+
+| Variable | Default | Description |
+|---|---|---|
+| `MODE` | `cli` | Start mode: `web`, `daemon`, `cli` |
+| `ACTUAL_SERVER_URL` | — | Actual Budget server URL |
+| `ACTUAL_PASSWORD` | — | Actual Budget password |
+| `ACTUAL_BUDGET_ID` | — | Budget ID |
+| `UPDATE_INTERVAL_MINUTES` | `60` | Daemon sync interval |
+| `WEB_PORT` | `3000` | Web UI port |
+| `WEB_PASSWORD` | — | HTTP Basic Auth password |
+| `STOCK_EXCHANGE_SUFFIX` | `.SW` | Ticker suffix (`.SW`, `.DE`, `.L`, …) |
+
+---
 
 ## Networking
 
-### Connecting to Actual Budget
+### Connecting to Actual Budget on the host machine
 
-#### Local Actual Budget (on host machine)
-
-```env
+```
 ACTUAL_SERVER_URL=http://host.docker.internal:5006
 ```
 
-#### Remote Actual Budget Server
+### Connecting to Actual Budget in another container
 
-```env
-ACTUAL_SERVER_URL=https://budget.example.com
+```yaml
+# docker-compose.yml — share the same network
+networks:
+  - budget-network
 ```
 
-#### Actual Budget in Docker Container
-
-If both are in the same Docker network:
-
-```env
+```
 ACTUAL_SERVER_URL=http://actual-budget:5006
 ```
 
-To share a network:
-
-```yaml
-services:
-  helvetfolio:
-    networks:
-      - budget-network
-
-networks:
-  budget-network:
-    external: true
-```
-
-## Scheduling with Cron (Alternative to Daemon)
-
-Instead of daemon mode, use host cron:
-
-```bash
-# Add to crontab
-crontab -e
-```
-
-Add:
-
-```cron
-# Update stock prices every hour
-0 * * * * cd /path/to/actual-swissmarket-extension && docker-compose run --rm helvetfolio update >> /var/log/stocks.log 2>&1
-```
-
-## Backup and Restore
-
-### Backup Portfolio
-
-```bash
-cp portfolio.json portfolio.backup.json
-```
-
-### Restore Portfolio
-
-```bash
-cp portfolio.backup.json portfolio.json
-```
-
-### Backup Actual Budget Data
-
-```bash
-tar -czf data-backup.tar.gz data/
-```
+---
 
 ## Troubleshooting
 
-### Container Can't Connect to Actual Budget
+### Container exits immediately
 
-**Problem**: `ECONNREFUSED` or connection timeout
+Check the MODE. The default (`cli`) runs `list` and exits — that is expected behaviour for a CLI command. Use `MODE=web` or `MODE=daemon` for long-running services.
 
-**Solutions**:
+### Can't connect to Actual Budget
 
-1. Use `host.docker.internal` instead of `localhost`
-2. Check Actual Budget is running: `curl http://localhost:5006`
-3. Verify firewall allows Docker connections
-4. Try bridge network mode
+- Use `host.docker.internal` instead of `localhost` when Actual Budget runs on the host
+- Verify Actual Budget is running: `curl http://localhost:5006`
 
-### Portfolio File Not Persisting
-
-**Problem**: Changes lost after container stops
-
-**Solution**: Ensure volume mount is correct
+### Port already in use
 
 ```bash
-# Check mounts
-docker inspect helvetfolio | grep Mounts -A 10
+WEB_PORT=3001 docker compose up -d helvetfolio-web
 ```
 
-### Permission Errors
-
-**Problem**: Can't write to `portfolio.json`
-
-**Solution**: Fix file permissions
+### View logs
 
 ```bash
-chmod 666 portfolio.json
+docker compose logs -f helvetfolio-web
+docker logs helvetfolio-web
 ```
-
-### Environment Variables Not Loading
-
-**Problem**: Settings not applied
-
-**Solution**: Verify .env file
-
-```bash
-# Check loaded env vars
-docker-compose config
-```
-
-## Performance
-
-### Image Size
-
-- Base image: ~180MB (Node 20 Alpine)
-- With dependencies: ~250MB
-
-### Resource Limits
-
-Add to `docker-compose.yml`:
-
-```yaml
-deploy:
-  resources:
-    limits:
-      cpus: '0.5'
-      memory: 512M
-```
-
-## Security
-
-### Protecting Credentials
-
-1. **Never commit .env**
-   - Already in `.gitignore`
-
-2. **Use Docker secrets** (Swarm mode):
-
-```yaml
-secrets:
-  actual_password:
-    file: ./secrets/password.txt
-
-services:
-  helvetfolio:
-    secrets:
-      - actual_password
-```
-
-1. **Environment variable from secrets**:
-
-```bash
-export ACTUAL_PASSWORD=$(cat secrets/password.txt)
-docker-compose run helvetfolio list
-```
-
-## Multi-Platform Builds
-
-Build for different architectures:
-
-```bash
-# Build for ARM (Raspberry Pi, M1/M2 Mac)
-docker buildx build --platform linux/arm64 -t helvetfolio:arm64 .
-
-# Build for both AMD64 and ARM64
-docker buildx build \
-  --platform linux/amd64,linux/arm64 \
-  -t helvetfolio:latest .
-```
-
-## Docker Hub Publishing
-
-```bash
-# Tag image
-docker tag helvetfolio:latest yourusername/helvetfolio:latest
-
-# Push to Docker Hub
-docker push yourusername/helvetfolio:latest
-
-# Pull and run from anywhere
-docker pull yourusername/helvetfolio:latest
-```
-
-## Complete Example Workflow
-
-```bash
-# Setup
-cp .env.example .env
-nano .env  # Edit configuration
-echo '{"stocks":[]}' > portfolio.json
-mkdir -p data
-
-# Build
-docker-compose build
-
-# Add stocks
-docker-compose run --rm helvetfolio add NESN 100
-docker-compose run --rm helvetfolio add NOVN 50
-docker-compose run --rm helvetfolio add ROG 25
-
-# View portfolio
-docker-compose run --rm helvetfolio list
-
-# Start automatic updates
-docker-compose up -d helvetfolio-daemon
-
-# Check logs
-docker-compose logs -f helvetfolio-daemon
-
-# Manual update
-docker-compose run --rm helvetfolio update
-
-# Stop daemon
-docker-compose down
-```
-
-## Next Steps
-
-- Monitor logs regularly
-- Set up automatic backups
-- Configure monitoring/alerts
-- Consider Kubernetes for production
