@@ -1,18 +1,28 @@
-# Web UI Guide
+<div align="center">
+  <img src="public/favicon.svg" width="64" height="64" alt="Helvetfolio logo"><br><br>
 
-Portfolio dashboard for managing your holdings and syncing with Actual Budget.
+  # Web UI Guide
+
+  Portfolio dashboard for managing your holdings and syncing with Actual Budget.
+
+  [← Back to README](README.md)
+</div>
 
 ---
 
 ## Starting the Web UI
 
-### Docker Compose
+<details>
+<summary><strong>Docker Compose</strong></summary>
 
 ```bash
 docker compose up -d helvetfolio-web
 ```
 
-### Docker run
+</details>
+
+<details>
+<summary><strong>docker run</strong></summary>
 
 ```bash
 docker run -d \
@@ -23,14 +33,19 @@ docker run -d \
   ghcr.io/flawas/helvetfolio:latest
 ```
 
-### Docker Desktop GUI
+</details>
+
+<details>
+<summary><strong>Docker Desktop GUI</strong></summary>
 
 1. Pull or build the image
-2. **Images** → **Run** → **Optional settings**:
+2. **Images → Run → Optional settings**
    - Port: `3000` → `3000`
    - Volume: `./data` → `/app/data`
    - Env: `MODE` = `web`
 3. Click **Run**
+
+</details>
 
 Open **http://localhost:3000** in your browser.
 
@@ -38,66 +53,93 @@ Open **http://localhost:3000** in your browser.
 
 ## Features
 
-### Portfolio table
+### 📊 Portfolio Table
 
 - All holdings in a single responsive table
-- Inline editing — click **Qty**, **Purchase Date**, or **Buy Price** to edit in-place; press Enter to save, Escape to cancel
-- Gain/loss badge per row (green/red)
-- Summary bar: total value, total gain/loss, total positions
+- Inline editing — click **Qty**, **Purchase Date**, or **Buy Price** to edit in-place; press `Enter` to save, `Escape` to cancel
+- Gain/loss badge per row (green / red)
+- Summary cards: total value, total gain/loss, total positions
 
-### Sync status
+### 🏷️ Stock Grouping
+
+Organise holdings into named groups directly from the portfolio table.
+
+| Action | How |
+|---|---|
+| Create a group | Click the tag icon on any stock row → **Create new group…** |
+| Assign a stock | Click the tag icon → select a group |
+| Rename a group | Double-click the group header |
+| Delete a group | Hover the group header → click **✕** |
+| Collapse / expand | Click anywhere on the group header row |
+
+Groups display aggregate value and gain/loss. Multiple positions of the same ticker are independently assignable because grouping is keyed on the Actual Budget account ID.
+
+### 🔃 Column Sorting
+
+Click any column header to sort ascending or descending. An arrow indicator shows the active sort direction.
+
+### 🕐 Sync Status
 
 Two timestamps are shown below the summary:
 
 - **Yahoo Finance** — when prices were last fetched
 - **Actual Budget** — when balances were last written
 
-### Price sync
+### 🔄 Price Sync
 
 Click **Update Prices** to fetch the latest prices from Yahoo Finance and push updated balances to Actual Budget.
 
-### Settings
+### ⚙️ Settings
 
 Click **Settings** to configure:
 
-- Actual Budget server URL, password, and budget selection
-- Web UI password (HTTP Basic Auth)
+- Actual Budget server URL, password, and budget
+- Web UI password
 
-No restart required — settings take effect immediately and are persisted to the `./data` directory.
-
----
-
-## Password protection
-
-Set a password in the Settings modal or via environment variable:
-
-```env
-WEB_PASSWORD=your-secret
-```
-
-The `WEB_PASSWORD` env var takes precedence over the UI setting. When set, all requests require HTTP Basic Auth.
+No restart required — settings take effect immediately and are persisted to `./data`.
 
 ---
 
-## Adding stocks
+## Adding Stocks
 
-1. Click **Add Stock**
-2. Enter the ticker (e.g. `NESN`, `NOVN`, `ROG`) — the exchange suffix is added automatically
-3. Enter quantity
+1. Click **Add Stock** *(disabled until a valid Actual Budget connection is configured)*
+2. Enter the ticker symbol — e.g. `NESN`, `NOVN`, `ROG` — the exchange suffix is added automatically
+3. Enter the quantity
 4. Optionally set a purchase date and price for gain/loss tracking
 5. Click **Add Stock**
 
 A new account is created in Actual Budget and the current price is fetched immediately.
 
----
-
-## Accessing from other devices
-
-Find your host IP and open `http://<IP>:3000` from any device on the same network. Enable the web password to restrict access.
+> [!TIP]
+> The default exchange suffix is `.SW` (SIX Swiss Exchange). Change it via `STOCK_EXCHANGE_SUFFIX` to track stocks on other exchanges (`.DE`, `.L`, etc.).
 
 ---
 
-## Configuration
+## Password Protection
+
+Set a password in **Settings → Web Password** or via environment variable:
+
+```env
+WEB_PASSWORD=your-secret
+```
+
+> [!NOTE]
+> `WEB_PASSWORD` via environment variable takes precedence over the UI setting. When a password is configured, a branded login modal is shown — the browser's native auth dialog is never used.
+
+Credentials are stored in `sessionStorage` for the duration of the tab session.
+
+---
+
+## Accessing from Other Devices
+
+Find your host IP and open `http://<IP>:3000` from any device on the same network.
+
+> [!WARNING]
+> Enable the web password before exposing the UI on a shared network.
+
+---
+
+## Configuration Reference
 
 | Variable | Default | Description |
 |---|---|---|
@@ -111,7 +153,9 @@ Find your host IP and open `http://<IP>:3000` from any device on the same networ
 
 ---
 
-## API reference
+## API Reference
+
+All endpoints return JSON. When a web password is configured, include `Authorization: Basic base64(:password)`.
 
 | Method | Path | Description |
 |---|---|---|
@@ -121,6 +165,10 @@ Find your host IP and open `http://<IP>:3000` from any device on the same networ
 | `DELETE` | `/api/stocks/:ticker` | Remove a stock |
 | `PUT` | `/api/stocks/:ticker/quantity` | Update quantity |
 | `PATCH` | `/api/stocks/:ticker` | Update purchase date / price |
+| `PATCH` | `/api/stocks/by-account/:accountId/group` | Assign stock to a group |
+| `POST` | `/api/groups` | Create a group |
+| `PATCH` | `/api/groups/:id` | Rename a group |
+| `DELETE` | `/api/groups/:id` | Delete a group |
 | `POST` | `/api/update-prices` | Fetch prices and sync to Actual Budget |
 | `GET` | `/api/connection` | Get current connection settings |
 | `POST` | `/api/connection` | Update connection settings |
@@ -132,15 +180,18 @@ Find your host IP and open `http://<IP>:3000` from any device on the same networ
 ## Troubleshooting
 
 **Can't connect to Actual Budget**
+
 - Verify Actual Budget is running and reachable
 - When running in Docker, use `host.docker.internal` instead of `localhost` in the server URL
 - Check the server URL and password in Settings
 
 **Port already in use**
+
 ```bash
 WEB_PORT=3001 docker compose up -d helvetfolio-web
 ```
 
 **Prices not updating**
-- Click Update Prices and check the toast notification for errors
-- Verify the ticker is valid on Yahoo Finance
+
+- Click Update Prices and check the notification for errors
+- Verify the ticker is valid on Yahoo Finance (try searching it at finance.yahoo.com)

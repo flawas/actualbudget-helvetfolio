@@ -42,6 +42,7 @@
                 <button class="btn btn-secondary" id="updatePricesBtn">Update Prices</button>
                 <button class="btn btn-secondary" id="refreshBtn">Refresh</button>
                 <button class="btn btn-secondary" id="settingsBtn">Settings</button>
+                <a href="/docs.html" class="btn btn-secondary">Docs</a>
             </div>
         </div>
 
@@ -143,6 +144,46 @@
             </div>
         </div>
 
+        <!-- Login Modal (replaces native HTTP Basic Auth dialog) -->
+        <div class="modal" id="loginModal">
+            <div class="modal-content">
+                <div class="modal-header" style="border-bottom: none; padding-bottom: 8px;">
+                    <h2 id="loginTitle">Welcome to Helvetfolio</h2>
+                </div>
+                <form id="loginForm">
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 20px;">
+                        This portfolio is password protected. Enter your password to continue.
+                    </p>
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password" required>
+                        <small id="loginError" style="color: var(--danger); display: none;">Incorrect password. Please try again.</small>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Generic Dialog Modal (replaces confirm / prompt) -->
+        <div class="modal" id="dialogModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="dialogTitle"></h2>
+                    <button class="close-btn" id="closeDialogModal">&times;</button>
+                </div>
+                <p id="dialogMessage"></p>
+                <div class="form-group" id="dialogInputGroup">
+                    <input type="text" id="dialogInput" autocomplete="off">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-text" id="dialogCancelBtn">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="dialogConfirmBtn">Confirm</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Stocks List -->
         <div id="stocksList">
             <div class="loading">Loading portfolio...</div>
@@ -153,6 +194,13 @@
     </div>
 
     <script src="app.js"></script>
+
+    <footer class="footer">
+        Made with ❤️ by Flavio &nbsp;·&nbsp;
+        <a href="https://github.com/flawas/actualbudget-helvetfolio" target="_blank" rel="noopener">
+            github.com/flawas/actualbudget-helvetfolio
+        </a>
+    </footer>
 </body>
 
 </html>

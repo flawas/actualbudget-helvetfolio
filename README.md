@@ -1,19 +1,81 @@
-# Helvetfolio
+<div align="center">
+  <img src="public/favicon.svg" width="96" height="96" alt="Helvetfolio logo"><br><br>
 
-Track your stock portfolio and keep it in sync with [Actual Budget](https://actualbudget.org) automatically.
+  # Helvetfolio
 
-Prices are fetched from Yahoo Finance and written to a dedicated Actual Budget account per holding — on a schedule, or on demand via the web UI.
+  **Track your stock portfolio and keep it in sync with [Actual Budget](https://actualbudget.org) automatically.**
 
-[![Docker Hub](https://img.shields.io/docker/v/flawas/helvetfolio?label=Docker%20Hub)](https://hub.docker.com/r/flawas/helvetfolio)
-[![GHCR](https://img.shields.io/badge/ghcr.io-flawas%2Fhelvetfolio-blue)](https://ghcr.io/flawas/helvetfolio)
+  Prices are fetched from Yahoo Finance and written to a dedicated Actual Budget account per holding — on a schedule, via the web UI, or from the command line.
+
+  <br>
+
+  [![Docker Hub](https://img.shields.io/docker/v/flawas/helvetfolio?label=Docker%20Hub&logo=docker&logoColor=white&color=2496ED)](https://hub.docker.com/r/flawas/helvetfolio)
+  [![GHCR](https://img.shields.io/badge/GHCR-flawas%2Fhelvetfolio-blue?logo=github&logoColor=white)](https://ghcr.io/flawas/helvetfolio)
+  [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=flawas_actualbudget-helvetfolio&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=flawas_actualbudget-helvetfolio)
+  [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=flawas_actualbudget-helvetfolio&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=flawas_actualbudget-helvetfolio)
+  [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=flawas_actualbudget-helvetfolio&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=flawas_actualbudget-helvetfolio)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+  <br>
+
+  [Quick Start](#-quick-start) · [Features](#-features) · [Configuration](#-configuration) · [Docs](WEB_GUI.md) · [Docker](DOCKER.md)
+
+</div>
 
 ---
 
-## Quick start
+## ✨ Features
 
-No configuration file required. Connection settings are configured through the web UI and persisted to the `./data` directory.
+<table>
+<tr>
+<td>
 
-### With Docker Compose (recommended)
+**📊 Live Portfolio Dashboard**<br>
+Responsive table with total value, gain/loss, and per-holding badges. Inline editing — click any cell to edit in place.
+
+</td>
+<td>
+
+**🏷️ Stock Grouping**<br>
+Organise holdings into named groups. Groups show aggregate value and gain/loss, collapse/expand on click.
+
+</td>
+</tr>
+<tr>
+<td>
+
+**📈 Automatic Price Sync**<br>
+Yahoo Finance prices pushed to Actual Budget on demand or on a schedule via the background daemon.
+
+</td>
+<td>
+
+**🔒 Password Protection**<br>
+Optional web UI password set through the Settings modal or via environment variable. Styled login modal, no browser dialogs.
+
+</td>
+</tr>
+<tr>
+<td>
+
+**⚙️ Zero-Config Start**<br>
+No configuration file required. Enter connection settings through the web UI — persisted automatically to `./data`.
+
+</td>
+<td>
+
+**🖥️ Three Run Modes**<br>
+Web UI, background daemon, or one-shot CLI — all from the same Docker image via `MODE=`.
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🚀 Quick Start
+
+### Docker Compose (recommended)
 
 ```bash
 docker compose up -d helvetfolio-web
@@ -21,11 +83,9 @@ docker compose up -d helvetfolio-web
 
 Open **http://localhost:3000** and configure your Actual Budget connection in **Settings**.
 
-### With docker run
+### docker run
 
 ```bash
-docker pull ghcr.io/flawas/helvetfolio:latest
-
 docker run -d \
   --name helvetfolio-web \
   -p 3000:3000 \
@@ -34,68 +94,49 @@ docker run -d \
   ghcr.io/flawas/helvetfolio:latest
 ```
 
-Open **http://localhost:3000** in your browser.
-
-### With Docker Desktop GUI
+### Docker Desktop
 
 1. Pull `ghcr.io/flawas/helvetfolio:latest`
-2. **Images** → find the image → **Run**
-3. Expand **Optional settings**:
-   - **Ports**: `3000` → `3000`
-   - **Volumes**: host path `./data` → container path `/app/data`
-   - **Environment variables**: `MODE` = `web`
-4. Click **Run**
+2. **Images → Run → Optional settings**
+   - Port: `3000` → `3000`
+   - Volume: `./data` → `/app/data`
+   - Env: `MODE` = `web`
+3. Click **Run**, then open **http://localhost:3000**
+
+> [!TIP]
+> When Actual Budget is running on the same machine, use `http://host.docker.internal:5006` as the server URL.
 
 ---
 
-## Docker images
+## 🐳 Docker Images
 
-| Image | Registry |
-|---|---|
-| `flawas/helvetfolio:latest` | [Docker Hub](https://hub.docker.com/r/flawas/helvetfolio) |
-| `ghcr.io/flawas/helvetfolio:latest` | [GitHub Container Registry](https://ghcr.io/flawas/helvetfolio) |
+| Image | Registry | Arch |
+|---|---|---|
+| `flawas/helvetfolio:latest` | [Docker Hub](https://hub.docker.com/r/flawas/helvetfolio) | `amd64` · `arm64` |
+| `ghcr.io/flawas/helvetfolio:latest` | [GitHub Container Registry](https://ghcr.io/flawas/helvetfolio) | `amd64` · `arm64` |
 
-Both registries are updated on every release. Multi-arch: `linux/amd64` + `linux/arm64`.
-
----
-
-## Compose files
-
-| File | Use case |
-|---|---|
-| `docker-compose.yml` | **Published images** — pull and run, no build step |
-| `docker-compose.dev.yml` | **Build from source** — for local development |
-
-```bash
-# End users — published images
-docker compose up -d helvetfolio-web
-
-# Developers — build from source
-docker compose -f docker-compose.dev.yml up -d helvetfolio-web
-```
+Both registries are updated on every release.
 
 ---
 
-## Start modes
-
-The image is controlled via the `MODE` environment variable:
+## 🎛️ Start Modes
 
 | `MODE` | What runs | Use case |
 |---|---|---|
-| `web` (recommended) | Web UI on port 3000 | Always-on dashboard |
+| `web` *(recommended)* | Web UI on port 3000 | Always-on dashboard |
 | `daemon` | Background price sync | Scheduled updates without the UI |
-| `cli` (default) | One-shot CLI command | Manual operations |
+| `cli` *(default)* | One-shot CLI command | Manual operations |
 
 ---
 
-## CLI commands
+## 🖥️ CLI Commands
 
 ```bash
 # With Docker Compose
 docker compose run --rm helvetfolio <command>
 
-# With docker run (no volume = ephemeral; add -v $(pwd)/data:/app/data to persist)
-docker run --rm ghcr.io/flawas/helvetfolio:latest <command>
+# With docker run
+docker run --rm -v $(pwd)/data:/app/data ghcr.io/flawas/helvetfolio:latest <command>
 ```
 
 | Command | Description |
@@ -105,12 +146,12 @@ docker run --rm ghcr.io/flawas/helvetfolio:latest <command>
 | `remove <ticker>` | Remove a stock |
 | `set-quantity <ticker> <qty>` | Update share count |
 | `update` | Fetch latest prices and sync to Actual Budget |
-| `performance` | Show gains/losses |
+| `performance` | Show gains / losses |
 | `start-daemon` | Run continuous background sync |
 
 ---
 
-## Configuration
+## ⚙️ Configuration
 
 All connection settings can be configured from the **Settings** modal in the web UI — no restart required.
 
@@ -127,45 +168,30 @@ Environment variables can also be used to pre-configure or override settings:
 | `UPDATE_INTERVAL_MINUTES` | `60` | Sync interval in daemon mode |
 | `PORTFOLIO_FILE` | `/app/data/portfolio.json` | Portfolio data file |
 | `WEB_PORT` | `3000` | Web UI port |
-| `WEB_PASSWORD` | — | Enables HTTP Basic Auth on the web UI |
+| `WEB_PASSWORD` | — | Enables password protection on the web UI |
 
-All data (portfolio, connection settings, Actual Budget cache) is stored in the single `./data` directory. No pre-configuration needed — the portfolio file is created automatically on first use.
-
----
-
-## Web UI features
-
-- Portfolio table with total value and gain/loss summary
-- Inline editing — click Qty, Purchase Date or Buy Price to edit in-place
-- Separate sync timestamps for Yahoo Finance and Actual Budget
-- Responsive layout (no horizontal scroll)
-- Optional password protection (HTTP Basic Auth)
+> [!NOTE]
+> All data (portfolio, settings, Actual Budget cache) is stored in the single `./data` directory. No pre-configuration needed — the portfolio file is created automatically on first use.
 
 ---
 
-## Building locally
+## 📚 Docs
 
-```bash
-# Build image
-docker build -t helvetfolio:local .
-
-# Run web UI
-docker run -d -p 3000:3000 -e MODE=web helvetfolio:local
-
-# Run CLI
-docker run --rm helvetfolio:local list
-```
+| Guide | Description |
+|---|---|
+| [Web UI Guide](WEB_GUI.md) | Features, adding stocks, password protection, API reference |
+| [Docker Deployment](DOCKER.md) | All run modes, volumes, networking, troubleshooting |
+| [Quick Start](QUICK_START.md) | Step-by-step getting started guide |
+| [Swiss Stock Tickers](SWISS_STOCKS.md) | Ticker reference for SIX Swiss Exchange |
 
 ---
 
-## Docs
+## 📄 License
 
-- [Web UI guide](WEB_GUI.md)
-- [Docker deployment](DOCKER.md)
-- [Stock ticker reference](SWISS_STOCKS.md)
+MIT — see [LICENSE](LICENSE)
 
 ---
 
-## License
-
-MIT
+<div align="center">
+  Made with ❤️ by <a href="https://github.com/flawas">Flavio</a>
+</div>

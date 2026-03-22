@@ -1,24 +1,23 @@
-# Docker Deployment Guide
+<div align="center">
+  <img src="public/favicon.svg" width="64" height="64" alt="Helvetfolio logo"><br><br>
+
+  # Docker Deployment Guide
+
+  [← Back to README](README.md)
+</div>
+
+---
 
 ## Quick Start
-
-### Web UI (recommended)
 
 ```bash
 docker compose up -d helvetfolio-web
 ```
 
-Open **http://localhost:3000**. No pre-configuration needed — connection settings are saved through the web UI.
+Open **http://localhost:3000** — no pre-configuration needed. Connection settings are saved through the web UI.
 
-### Docker Desktop GUI
-
-1. Pull `ghcr.io/flawas/helvetfolio:latest` or build locally (`docker build -t helvetfolio:local .`)
-2. **Images** → find the image → **Run**
-3. Expand **Optional settings**:
-   - **Ports**: `3000` → `3000`
-   - **Volumes**: host path `./data` → container path `/app/data`
-   - **Environment variables**: `MODE` = `web`
-4. Click **Run**
+> [!TIP]
+> When Actual Budget is running on the same machine, use `http://host.docker.internal:5006` as the server URL in Settings.
 
 ---
 
@@ -26,17 +25,18 @@ Open **http://localhost:3000**. No pre-configuration needed — connection setti
 
 The image behaviour is controlled by the `MODE` environment variable:
 
-| `MODE` | What runs | Command |
+| `MODE` | What runs | Use case |
 |---|---|---|
-| `web` | Web UI on `:3000` | `docker run -e MODE=web ...` |
-| `daemon` | Background price sync | `docker run -e MODE=daemon ...` |
-| `cli` (default) | One-shot CLI | `docker run ... list` |
+| `web` *(recommended)* | Web UI on `:3000` | Always-on dashboard |
+| `daemon` | Background price sync | Scheduled updates without the UI |
+| `cli` *(default)* | One-shot CLI command | Manual operations |
 
 ---
 
 ## Running with docker run
 
-### Web UI
+<details>
+<summary><strong>Web UI</strong></summary>
 
 ```bash
 docker run -d \
@@ -47,7 +47,10 @@ docker run -d \
   ghcr.io/flawas/helvetfolio:latest
 ```
 
-### Daemon
+</details>
+
+<details>
+<summary><strong>Daemon (background sync)</strong></summary>
 
 ```bash
 docker run -d \
@@ -59,10 +62,13 @@ docker run -d \
   ghcr.io/flawas/helvetfolio:latest
 ```
 
-### CLI (one-shot)
+</details>
+
+<details>
+<summary><strong>CLI (one-shot)</strong></summary>
 
 ```bash
-# No volume = ephemeral (data lost on stop)
+# No volume — ephemeral (data lost on stop)
 docker run --rm ghcr.io/flawas/helvetfolio:latest list
 
 # With persistent data
@@ -70,6 +76,8 @@ docker run --rm \
   -v $(pwd)/data:/app/data \
   ghcr.io/flawas/helvetfolio:latest add NESN 100
 ```
+
+</details>
 
 ---
 
@@ -82,27 +90,18 @@ docker compose up -d helvetfolio-web
 # Daemon
 docker compose up -d helvetfolio-daemon
 
-# One-shot CLI
+# One-shot CLI commands
 docker compose run --rm helvetfolio list
 docker compose run --rm helvetfolio add NESN 100
 docker compose run --rm helvetfolio performance
 ```
 
----
+### Compose files
 
-## Building Locally
-
-```bash
-docker build -t helvetfolio:local .
-```
-
-The Dockerfile uses a multi-stage build — build tools (`g++`, `make`, `python3`) are stripped from the final image, keeping it at ~235 MB.
-
-To use the locally built image with compose:
-
-```bash
-docker compose -f docker-compose.dev.yml up -d helvetfolio-web
-```
+| File | Use case |
+|---|---|
+| `docker-compose.yml` | **Published images** — pull and run, no build step |
+| `docker-compose.dev.yml` | **Build from source** — for local development |
 
 ---
 
@@ -114,7 +113,7 @@ All data lives in a single directory:
 |---|---|---|
 | `./data` | `/app/data` | Portfolio file, Actual Budget cache, settings |
 
-The portfolio file (`/app/data/portfolio.json`) is created automatically on first write. No pre-setup required — you can run the container with no volume and it will start with an empty in-memory portfolio.
+The portfolio file is created automatically on first write. You can run the container without a volume and it will start with an empty in-memory portfolio.
 
 ### Backup
 
@@ -122,7 +121,7 @@ The portfolio file (`/app/data/portfolio.json`) is created automatically on firs
 # Portfolio + settings
 cp -r data/ data-backup-$(date +%Y%m%d)/
 
-# Or just the portfolio file
+# Just the portfolio file
 cp data/portfolio.json portfolio.backup.json
 ```
 
@@ -130,7 +129,7 @@ cp data/portfolio.json portfolio.backup.json
 
 ## Configuration
 
-Connection settings are saved through the **Settings** modal in the web UI. Environment variables can be used to pre-configure or override:
+Connection settings are saved through the **Settings** modal in the web UI. Environment variables can pre-configure or override them:
 
 | Variable | Default | Description |
 |---|---|---|
@@ -138,7 +137,7 @@ Connection settings are saved through the **Settings** modal in the web UI. Envi
 | `ACTUAL_SERVER_URL` | — | Actual Budget server URL |
 | `ACTUAL_PASSWORD` | — | Actual Budget password |
 | `ACTUAL_BUDGET_ID` | — | Budget ID |
-| `UPDATE_INTERVAL_MINUTES` | `60` | Daemon sync interval |
+| `UPDATE_INTERVAL_MINUTES` | `60` | Daemon sync interval (minutes) |
 | `WEB_PORT` | `3000` | Web UI port |
 | `WEB_PASSWORD` | — | HTTP Basic Auth password |
 | `STOCK_EXCHANGE_SUFFIX` | `.SW` | Ticker suffix (`.SW`, `.DE`, `.L`, …) |
@@ -147,16 +146,16 @@ Connection settings are saved through the **Settings** modal in the web UI. Envi
 
 ## Networking
 
-### Connecting to Actual Budget on the host machine
+### Actual Budget on the host machine
 
 ```
 ACTUAL_SERVER_URL=http://host.docker.internal:5006
 ```
 
-### Connecting to Actual Budget in another container
+### Actual Budget in another container
 
 ```yaml
-# docker-compose.yml — share the same network
+# docker-compose.yml — share the same Docker network
 networks:
   - budget-network
 ```
@@ -167,24 +166,43 @@ ACTUAL_SERVER_URL=http://actual-budget:5006
 
 ---
 
+## Building from Source
+
+> [!NOTE]
+> End users should use the published images from Docker Hub or GHCR. These steps are only needed if you are contributing to the project.
+
+```bash
+docker build -t helvetfolio:local .
+```
+
+The Dockerfile uses a multi-stage build — build tools (`g++`, `make`, `python3`) are stripped from the final image, keeping it lean.
+
+```bash
+# Use the locally built image with compose
+docker compose -f docker-compose.dev.yml up -d helvetfolio-web
+```
+
+---
+
 ## Troubleshooting
 
-### Container exits immediately
+**Container exits immediately**
 
-Check the MODE. The default (`cli`) runs `list` and exits — that is expected behaviour for a CLI command. Use `MODE=web` or `MODE=daemon` for long-running services.
+> [!WARNING]
+> The default `MODE` is `cli`, which runs `list` and exits — this is expected for a CLI command. Use `MODE=web` or `MODE=daemon` for long-running services.
 
-### Can't connect to Actual Budget
+**Can't connect to Actual Budget**
 
 - Use `host.docker.internal` instead of `localhost` when Actual Budget runs on the host
-- Verify Actual Budget is running: `curl http://localhost:5006`
+- Verify it's running: `curl http://localhost:5006`
 
-### Port already in use
+**Port already in use**
 
 ```bash
 WEB_PORT=3001 docker compose up -d helvetfolio-web
 ```
 
-### View logs
+**View logs**
 
 ```bash
 docker compose logs -f helvetfolio-web

@@ -97,6 +97,7 @@ class PortfolioManager {
         if (newConfig.serverURL) this.portfolio.settings.serverURL = newConfig.serverURL;
         if (newConfig.password) this.portfolio.settings.password = newConfig.password;
         if (newConfig.budgetId) this.portfolio.settings.budgetId = newConfig.budgetId;
+        if (newConfig.budgetName !== undefined) this.portfolio.settings.budgetName = newConfig.budgetName;
         // Allow empty string to explicitly clear the web password
         if (newConfig.webPassword !== undefined) this.portfolio.settings.webPassword = newConfig.webPassword;
 
@@ -158,7 +159,7 @@ class PortfolioManager {
         const priceData = await this.stockFetcher.fetchPrice(ticker);
 
         // Use purchase price if provided, otherwise use current price
-        const initialPrice = options.purchasePrice || priceData.price;
+        const initialPrice = options.purchasePrice != null ? options.purchasePrice : priceData.price;
         const purchaseDate = options.purchaseDate || new Date().toISOString().split('T')[0];
 
         // Create account in Actual Budget
@@ -230,6 +231,10 @@ class PortfolioManager {
 
         const tickers = this.portfolio.stocks.map(s => s.ticker);
         const prices = await this.stockFetcher.fetchMultiplePrices(tickers);
+
+        // Re-read portfolio so that any edits made during the slow Yahoo Finance
+        // fetches (e.g. inline buy-price edits) are not overwritten by this save.
+        await this.loadPortfolio();
 
         const updates = [];
 
@@ -315,23 +320,25 @@ class PortfolioManager {
 
         const stocks = this.portfolio.stocks.map(stock => {
             const currentValue = stock.quantity * stock.lastPrice;
-            const costBasis = stock.costBasis || (stock.quantity * (stock.purchasePrice || stock.lastPrice));
+            const costBasis = stock.costBasis != null ? stock.costBasis : (stock.quantity * (stock.purchasePrice != null ? stock.purchasePrice : stock.lastPrice));
             const gain = currentValue - costBasis;
             const gainPercent = costBasis > 0 ? (gain / costBasis) * 100 : 0;
 
             return {
                 ticker: stock.ticker,
                 name: stock.name,
+                accountId: stock.accountId,
                 quantity: stock.quantity,
                 purchaseDate: stock.purchaseDate,
-                purchasePrice: stock.purchasePrice || stock.lastPrice,
+                purchasePrice: stock.purchasePrice != null ? stock.purchasePrice : stock.lastPrice,
                 costBasis: costBasis,
                 currentPrice: stock.lastPrice,
                 currentValue: currentValue,
                 gain: gain,
                 gainPercent: gainPercent,
                 currency: stock.currency,
-                lastUpdated: stock.lastUpdated
+                lastUpdated: stock.lastUpdated,
+                groupId: stock.groupId || null
             };
         });
 
@@ -349,6 +356,7 @@ class PortfolioManager {
         return {
             totalStocks: stocks.length,
             stocks: stocks,
+            groups: this.portfolio.groups || [],
             totalCostBasis: totalCostBasis,
             totalValue: totalValue,
             totalGain: totalGain,
@@ -407,6 +415,72 @@ class PortfolioManager {
             stock.costBasis = stock.quantity * updates.purchasePrice;
         }
 
+        await this.savePortfolio();
+        return stock;
+    }
+
+    /**
+     * Add a new group
+     * @param {string} name - Group name
+     * @returns {Promise<object>} - New group { id, name }
+     */
+    async addGroup(name) {
+        await this.loadPortfolio();
+        if (!this.portfolio.groups) this.portfolio.groups = [];
+        const id = `g_${Date.now().toString(36)}`;
+        const group = { id, name };
+        this.portfolio.groups.push(group);
+        await this.savePortfolio();
+        return group;
+    }
+
+    /**
+     * Delete a group and unassign all its member stocks
+     * @param {string} id - Group ID
+     */
+    async removeGroup(id) {
+        await this.loadPortfolio();
+        if (!this.portfolio.groups) return;
+        this.portfolio.groups = this.portfolio.groups.filter(g => g.id !== id);
+        for (const stock of this.portfolio.stocks) {
+            if (stock.groupId === id) delete stock.groupId;
+        }
+        await this.savePortfolio();
+    }
+
+    /**
+     * Rename an existing group
+     * @param {string} id - Group ID
+     * @param {string} name - New name
+     * @returns {Promise<object>} - Updated group
+     */
+    async renameGroup(id, name) {
+        await this.loadPortfolio();
+        const group = (this.portfolio.groups || []).find(g => g.id === id);
+        if (!group) throw new Error(`Group ${id} not found`);
+        group.name = name;
+        await this.savePortfolio();
+        return group;
+    }
+
+    /**
+     * Assign or unassign a stock to a group
+     * @param {string} ticker - Stock ticker
+     * @param {string|null} groupId - Group ID, or null to unassign
+     * @returns {Promise<object>} - Updated stock
+     */
+    async setStockGroup(accountId, groupId) {
+        await this.loadPortfolio();
+        const stock = this.portfolio.stocks.find(s => s.accountId === accountId);
+        if (!stock) throw new Error(`Stock account ${accountId} not found in portfolio`);
+        if (groupId) {
+            if (!(this.portfolio.groups || []).find(g => g.id === groupId)) {
+                throw new Error(`Group ${groupId} not found`);
+            }
+            stock.groupId = groupId;
+        } else {
+            delete stock.groupId;
+        }
         await this.savePortfolio();
         return stock;
     }

@@ -57,14 +57,14 @@ function requireAuth(req, res, next) {
 
     const header = req.headers.authorization || '';
     if (!header.startsWith('Basic ')) {
-        res.set('WWW-Authenticate', 'Basic realm="Helvetfolio"');
+        // No WWW-Authenticate header — prevents the browser's native auth dialog.
+        // The frontend handles 401s with its own styled login modal.
         return res.status(401).json({ error: 'Authentication required' });
     }
 
     const decoded = Buffer.from(header.slice(6), 'base64').toString();
     const password = decoded.slice(decoded.indexOf(':') + 1);
     if (password !== pwd) {
-        res.set('WWW-Authenticate', 'Basic realm="Helvetfolio"');
         return res.status(401).json({ error: 'Incorrect password' });
     }
 
@@ -72,10 +72,12 @@ function requireAuth(req, res, next) {
 }
 
 // Middleware
-app.use(requireAuth);           // Auth gate (no-op when no password configured)
 app.use(cors({ origin: /^https?:\/\/localhost(:\d+)?$/ })); // local-only server: restrict CORS to localhost
 app.use(express.json());
+// Static files (HTML, CSS, JS) are served without auth so the page loads first.
+// Auth is enforced on all /api/* routes below.
 app.use(express.static(path.join(__dirname, '../public')));
+app.use('/api', requireAuth);
 
 // ─── Portfolio Routes ────────────────────────────────────────────────────────
 
@@ -110,7 +112,7 @@ app.post('/api/stocks', async (req, res) => {
 
         const options = {};
         if (purchaseDate) options.purchaseDate = purchaseDate;
-        if (purchasePrice) options.purchasePrice = Number.parseFloat(purchasePrice);
+        if (purchasePrice != null) options.purchasePrice = Number.parseFloat(purchasePrice);
 
         const stock = await manager.addStock(ticker, Number.parseFloat(quantity), options);
         res.json({ success: true, stock });
@@ -162,6 +164,54 @@ app.patch('/api/stocks/:ticker', async (req, res) => {
     }
 });
 
+// ─── Group Routes ────────────────────────────────────────────────────────────
+
+// Create a group
+app.post('/api/groups', async (req, res) => {
+    try {
+        const { name } = req.body;
+        if (!name?.trim()) return res.status(400).json({ error: 'Group name is required' });
+        const group = await manager.addGroup(name.trim());
+        res.json({ success: true, group });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Rename a group
+app.patch('/api/groups/:id', async (req, res) => {
+    try {
+        const { name } = req.body;
+        if (!name?.trim()) return res.status(400).json({ error: 'Group name is required' });
+        const group = await manager.renameGroup(req.params.id, name.trim());
+        res.json({ success: true, group });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Delete a group
+app.delete('/api/groups/:id', async (req, res) => {
+    try {
+        await manager.removeGroup(req.params.id);
+        res.json({ success: true });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Assign / unassign a stock to a group (keyed by accountId, not ticker, to support duplicate tickers)
+app.patch('/api/stocks/by-account/:accountId/group', async (req, res) => {
+    try {
+        const { accountId } = req.params;
+        const { groupId } = req.body;
+        const stock = await manager.setStockGroup(accountId, groupId || null);
+        res.json({ success: true, stock });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
 // ─── Connection Routes ───────────────────────────────────────────────────────
 
 // Get current connection settings — always reads from portfolio.json so the
@@ -173,6 +223,7 @@ app.get('/api/connection', async (req, res) => {
             serverURL: manager.actualConfig?.serverURL,
             hasPassword: !!manager.actualConfig?.password,
             budgetId: manager.actualConfig?.budgetId,
+            budgetName: manager.actualConfig?.budgetName,
             hasWebPassword: !!currentWebPassword(),
             webPasswordFromEnv: !!ENV_PASSWORD  // If true, the UI setting is overridden
         });
@@ -184,11 +235,12 @@ app.get('/api/connection', async (req, res) => {
 // Update connection settings
 app.post('/api/connection', async (req, res) => {
     try {
-        const { serverURL, password, budgetId, webPassword } = req.body;
+        const { serverURL, password, budgetId, budgetName, webPassword } = req.body;
 
         if (serverURL) config.serverURL = serverURL;
         if (password) config.password = password;
         if (budgetId) config.budgetId = budgetId;
+        if (budgetName !== undefined) config.budgetName = budgetName;
         // Allow explicit empty string to clear the web password
         if (webPassword !== undefined) config.webPassword = webPassword;
 

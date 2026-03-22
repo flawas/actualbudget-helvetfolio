@@ -12,34 +12,6 @@ docker run -d -p 3000:3000 -e MODE=web ghcr.io/flawas/helvetfolio:latest
 
 ---
 
-## better-sqlite3 compilation errors on macOS (`'climits' file not found`)
-
-This happens with Node.js v23+ or mismatched Xcode tools.
-
-**Solution 1 — Use Node 22 LTS (recommended)**
-
-```bash
-nvm install 22 && nvm use 22
-rm -rf node_modules package-lock.json
-npm install
-```
-
-**Solution 2 — Update Xcode command line tools**
-
-```bash
-sudo rm -rf /Library/Developer/CommandLineTools
-xcode-select --install
-```
-
-**Solution 3 — Use Docker (avoids native compilation entirely)**
-
-```bash
-docker build -t helvetfolio:local .
-docker run -d -p 3000:3000 -e MODE=web helvetfolio:local
-```
-
----
-
 ## Can't connect to Actual Budget
 
 **Symptoms**: `ECONNREFUSED`, connection timeout, or "Connection failed" in the web UI.

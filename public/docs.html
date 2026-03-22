@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Helvetfolio — Documentation</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* ── Docs-specific overrides ── */
+        .docs-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(245, 245, 247, 0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--separator);
+            padding: 0 28px;
+            margin: -48px -28px 48px;
+        }
+        .docs-nav-inner {
+            max-width: 1160px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 0;
+            height: 52px;
+        }
+        .docs-nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+            text-decoration: none;
+            margin-right: 24px;
+        }
+        .docs-nav-logo img { width: 24px; height: 24px; }
+        .docs-nav a.nav-link {
+            padding: 0 14px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: color 0.15s ease, border-color 0.15s ease;
+            white-space: nowrap;
+        }
+        .docs-nav a.nav-link:hover    { color: var(--text-primary); }
+        .docs-nav a.nav-link.active   { color: var(--accent); border-bottom-color: var(--accent); }
+        .docs-nav-spacer              { flex: 1; }
+        .docs-nav-gh {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--separator-strong);
+            background: var(--surface);
+            transition: box-shadow 0.15s ease, color 0.15s ease;
+        }
+        .docs-nav-gh:hover { box-shadow: var(--shadow-sm); color: var(--text-primary); }
+
+        /* ── Layout ── */
+        .docs-layout {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 40px;
+            align-items: start;
+        }
+
+        /* ── Sidebar ── */
+        .docs-sidebar {
+            position: sticky;
+            top: 72px;
+        }
+        .sidebar-section { margin-bottom: 28px; }
+        .sidebar-title {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-tertiary);
+            margin-bottom: 8px;
+            padding-left: 10px;
+        }
+        .sidebar-link {
+            display: block;
+            padding: 6px 10px;
+            border-radius: var(--radius-xs);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: background 0.12s ease, color 0.12s ease;
+            font-weight: 400;
+        }
+        .sidebar-link:hover  { background: var(--separator); color: var(--text-primary); }
+        .sidebar-link.active { background: var(--accent-light); color: var(--accent); font-weight: 500; }
+
+        /* ── Content ── */
+        .docs-content { min-width: 0; }
+
+        .docs-section {
+            background: var(--surface);
+            border-radius: var(--radius);
+            border: 1px solid var(--separator);
+            box-shadow: var(--shadow-sm);
+            padding: 36px 40px;
+            margin-bottom: 24px;
+        }
+
+        .docs-section h2 {
+            font-size: 1.375rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .docs-section h2 .section-icon {
+            font-size: 1.2rem;
+            opacity: 0.7;
+        }
+
+        .docs-section .section-lead {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+            line-height: 1.6;
+            margin-bottom: 28px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--separator);
+        }
+
+        .docs-section h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: var(--text-primary);
+            margin: 24px 0 10px;
+        }
+        .docs-section h3:first-of-type { margin-top: 0; }
+        /* Offset anchor scroll so sticky nav doesn't cover section titles */
+        .docs-section, #top { scroll-margin-top: 68px; }
+
+        .docs-section p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.65;
+            margin-bottom: 12px;
+        }
+
+        .docs-section ul, .docs-section ol {
+            padding-left: 20px;
+            margin-bottom: 12px;
+        }
+        .docs-section li {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.65;
+            margin-bottom: 4px;
+        }
+        .docs-section li strong { color: var(--text-primary); }
+
+        /* Code blocks */
+        .docs-section pre {
+            background: var(--bg);
+            border: 1px solid var(--separator);
+            border-radius: var(--radius-sm);
+            padding: 16px 20px;
+            overflow-x: auto;
+            margin: 12px 0 16px;
+        }
+        .docs-section code {
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', Menlo, monospace;
+            font-size: 0.82rem;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        .docs-section p code, .docs-section li code {
+            background: var(--bg);
+            border: 1px solid var(--separator);
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-size: 0.8rem;
+        }
+
+        /* Tables */
+        .docs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+            margin: 12px 0 16px;
+        }
+        .docs-table th {
+            text-align: left;
+            padding: 9px 14px;
+            background: var(--bg);
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-tertiary);
+            border-bottom: 1px solid var(--separator);
+        }
+        .docs-table td {
+            padding: 10px 14px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--separator);
+            vertical-align: top;
+            line-height: 1.5;
+        }
+        .docs-table tr:last-child td { border-bottom: none; }
+        .docs-table td:first-child   { color: var(--text-primary); font-family: 'SF Mono', Menlo, monospace; font-size: 0.8rem; }
+
+        /* Feature grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-top: 4px;
+        }
+        .feature-card {
+            background: var(--bg);
+            border: 1px solid var(--separator);
+            border-radius: var(--radius-sm);
+            padding: 18px 20px;
+        }
+        .feature-card-icon { font-size: 1.4rem; margin-bottom: 8px; }
+        .feature-card h4 {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+            letter-spacing: -0.01em;
+        }
+        .feature-card p {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            line-height: 1.55;
+            margin: 0;
+        }
+
+        /* Release badge */
+        .release-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--separator);
+        }
+        .release-version {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+        .release-date {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+        }
+        .release-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .release-tag.latest  { background: var(--success-light); color: #1A7A3C; }
+        .release-tag.feature { background: var(--accent-light);  color: var(--accent); }
+        .release-tag.fix     { background: rgba(0,0,0,0.06);     color: var(--text-secondary); }
+
+        .change-group { margin-bottom: 20px; }
+        .change-group-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--text-tertiary);
+            margin-bottom: 8px;
+        }
+        .change-list { list-style: none; padding: 0; }
+        .change-list li {
+            display: flex;
+            gap: 10px;
+            padding: 7px 0;
+            border-bottom: 1px solid var(--separator);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.5;
+        }
+        .change-list li:last-child { border-bottom: none; }
+        .change-pill {
+            flex-shrink: 0;
+            margin-top: 2px;
+            padding: 1px 8px;
+            border-radius: 20px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .pill-new     { background: var(--accent-light);  color: var(--accent); }
+        .pill-fix     { background: var(--success-light); color: #1A7A3C; }
+        .pill-changed { background: rgba(0,0,0,0.06);     color: var(--text-secondary); }
+
+        /* Step list */
+        .step-list { list-style: none; padding: 0; counter-reset: steps; }
+        .step-list li {
+            counter-increment: steps;
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+            align-items: flex-start;
+        }
+        .step-list li::before {
+            content: counter(steps);
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-top: 1px;
+        }
+        .step-list li > div { flex: 1; }
+        .step-list li strong { display: block; color: var(--text-primary); font-size: 0.9rem; margin-bottom: 4px; }
+
+        /* Hero */
+        .docs-hero {
+            background: var(--surface);
+            border-radius: var(--radius);
+            border: 1px solid var(--separator);
+            box-shadow: var(--shadow-sm);
+            padding: 48px 40px 40px;
+            margin-bottom: 24px;
+        }
+        .docs-hero h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            line-height: 1.1;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .docs-hero .hero-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            max-width: 600px;
+            margin-bottom: 28px;
+        }
+        .hero-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            background: var(--bg);
+            border: 1px solid var(--separator-strong);
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: box-shadow 0.15s ease, color 0.15s ease;
+        }
+        .hero-badge:hover { box-shadow: var(--shadow-sm); color: var(--text-primary); }
+
+        @media (max-width: 860px) {
+            .docs-layout { grid-template-columns: 1fr; }
+            .docs-sidebar { position: static; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .docs-nav a.nav-link { display: none; }
+        }
+        @media (max-width: 560px) {
+            .docs-section { padding: 24px 20px; }
+            .docs-hero    { padding: 28px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="docs-nav">
+        <div class="docs-nav-inner">
+            <a href="/" class="docs-nav-logo">
+                <img src="favicon.svg" alt="Helvetfolio">
+                Helvetfolio
+            </a>
+            <a href="/docs.html" class="nav-link active">Docs</a>
+            <a href="/docs.html#features" class="nav-link">Features</a>
+            <a href="/docs.html#changelog" class="nav-link">Changelog</a>
+            <a href="/docs.html#api" class="nav-link">API</a>
+            <span class="docs-nav-spacer"></span>
+            <a href="https://github.com/flawas/actualbudget-helvetfolio" target="_blank" rel="noopener" class="docs-nav-gh">
+                ⭐ GitHub
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Hero -->
+        <div class="docs-hero" id="top">
+            <h1>
+                <img src="favicon.svg" style="width:48px;height:48px;" alt="">
+                Helvetfolio
+            </h1>
+            <p class="hero-subtitle">
+                A Swiss stock portfolio tracker that syncs live prices from Yahoo Finance directly into your Actual Budget accounts. Run it as a web UI, background daemon, or one-shot CLI — all from a single Docker image.
+            </p>
+            <div class="hero-badges">
+                <a href="https://github.com/flawas/actualbudget-helvetfolio/releases/" class="hero-badge" target="_blank" rel="noopener">🏷 latest release</a>
+                <span class="hero-badge">🐳 Docker</span>
+                <span class="hero-badge">🇨🇭 SIX Swiss Exchange</span>
+                <span class="hero-badge">⚡ Yahoo Finance</span>
+                <a href="https://github.com/flawas/actualbudget-helvetfolio" class="hero-badge" target="_blank" rel="noopener">📦 Open Source</a>
+            </div>
+        </div>
+
+        <div class="docs-layout">
+            <!-- Sidebar -->
+            <aside class="docs-sidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Getting Started</div>
+                    <a href="#quickstart" class="sidebar-link">Quick Start</a>
+                    <a href="#modes" class="sidebar-link">Start Modes</a>
+                    <a href="#config" class="sidebar-link">Configuration</a>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Features</div>
+                    <a href="#features" class="sidebar-link">Web UI</a>
+                    <a href="#grouping" class="sidebar-link">Stock Grouping</a>
+                    <a href="#auth" class="sidebar-link">Authentication</a>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Reference</div>
+                    <a href="#api" class="sidebar-link">API Endpoints</a>
+                    <a href="#env" class="sidebar-link">Env Variables</a>
+                    <a href="#changelog" class="sidebar-link">Changelog</a>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="docs-content">
+
+                <!-- Quick Start -->
+                <section class="docs-section" id="quickstart">
+                    <h2><span class="section-icon">🚀</span> Quick Start</h2>
+                    <p class="section-lead">Up and running in under a minute with Docker Compose.</p>
+
+                    <h3>1. Start the web UI</h3>
+                    <pre><code>docker compose up -d helvetfolio-web</code></pre>
+                    <p>Open <strong>http://localhost:3000</strong> in your browser.</p>
+
+                    <h3>2. Connect to Actual Budget</h3>
+                    <p>Click <strong>Settings</strong> in the top-right, enter your Actual Budget server URL and password, then click <em>Test Connection &amp; List Budgets</em> to pick your budget.</p>
+
+                    <h3>3. Add your first stock</h3>
+                    <p>Click <strong>Add Stock</strong>, enter the ticker (e.g. <code>NESN</code> for Nestlé — the <code>.SW</code> suffix is added automatically), quantity, and optional purchase date &amp; price.</p>
+
+                    <h3>4. Sync prices</h3>
+                    <p>Click <strong>Update Prices</strong> to fetch the latest quotes from Yahoo Finance and push balances to Actual Budget. Or run the daemon for automatic syncing:</p>
+                    <pre><code>docker compose up -d helvetfolio-daemon</code></pre>
+                </section>
+
+                <!-- Modes -->
+                <section class="docs-section" id="modes">
+                    <h2><span class="section-icon">⚙️</span> Start Modes</h2>
+                    <p class="section-lead">Three modes — one image. Choose based on how you want to run Helvetfolio.</p>
+
+                    <table class="docs-table">
+                        <thead>
+                            <tr><th>Mode</th><th>Description</th><th>Command</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>web</td>
+                                <td>Express web UI on port 3000. Manage portfolio, edit inline, sync manually.</td>
+                                <td><code>MODE=web</code></td>
+                            </tr>
+                            <tr>
+                                <td>daemon</td>
+                                <td>Headless background process. Syncs prices on a cron schedule (default every 60 min).</td>
+                                <td><code>MODE=daemon</code></td>
+                            </tr>
+                            <tr>
+                                <td>cli</td>
+                                <td>One-shot commands: <code>add</code>, <code>remove</code>, <code>list</code>, <code>sync</code>, <code>update</code>.</td>
+                                <td><code>MODE=cli</code> (default)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Docker Compose services</h3>
+                    <pre><code># Start web UI
+docker compose up -d helvetfolio-web
+
+# Start background daemon
+docker compose up -d helvetfolio-daemon
+
+# Run one-shot CLI command
+docker compose run --rm helvetfolio list</code></pre>
+                </section>
+
+                <!-- Configuration -->
+                <section class="docs-section" id="config">
+                    <h2><span class="section-icon">🔧</span> Configuration</h2>
+                    <p class="section-lead">All settings can be configured via the web UI Settings panel and are persisted to <code>./data/portfolio.json</code>. Environment variables take hard precedence over persisted settings.</p>
+
+                    <table class="docs-table" id="env">
+                        <thead>
+                            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>ACTUAL_SERVER_URL</td><td>—</td><td>URL of your Actual Budget server (e.g. <code>http://localhost:5006</code>)</td></tr>
+                            <tr><td>ACTUAL_PASSWORD</td><td>—</td><td>Actual Budget server password</td></tr>
+                            <tr><td>ACTUAL_BUDGET_ID</td><td>—</td><td>Budget ID from Actual Budget → Advanced Settings</td></tr>
+                            <tr><td>ACTUAL_DATA_DIR</td><td><code>/app/data</code></td><td>Directory for portfolio file, Actual cache, and settings</td></tr>
+                            <tr><td>STOCK_EXCHANGE_SUFFIX</td><td><code>.SW</code></td><td>Exchange suffix appended to tickers without a dot (SIX Swiss Exchange)</td></tr>
+                            <tr><td>UPDATE_INTERVAL_MINUTES</td><td><code>60</code></td><td>Daemon sync interval in minutes</td></tr>
+                            <tr><td>PORTFOLIO_FILE</td><td><code>/app/data/portfolio.json</code></td><td>Path to the portfolio JSON file</td></tr>
+                            <tr><td>WEB_PORT</td><td><code>3000</code></td><td>Port the web UI listens on</td></tr>
+                            <tr><td>WEB_PASSWORD</td><td>—</td><td>Password for the web UI (env var overrides the UI setting)</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Features -->
+                <section class="docs-section" id="features">
+                    <h2><span class="section-icon">✨</span> Web UI Features</h2>
+                    <p class="section-lead">A clean, responsive portfolio table with everything you need to manage Swiss stock positions.</p>
+
+                    <div class="feature-grid">
+                        <div class="feature-card">
+                            <div class="feature-card-icon">📊</div>
+                            <h4>Portfolio Table</h4>
+                            <p>View all positions with ticker, name, quantity, purchase date, buy price, cost basis, current price, current value, and gain/loss — all in one table.</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-card-icon">✏️</div>
+                            <h4>Inline Editing</h4>
+                            <p>Click any editable cell to update quantity, purchase date, or buy price directly in the table. Changes sync to Actual Budget immediately.</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-card-icon">🗂</div>
+                            <h4>Stock Grouping</h4>
+                            <p>Organise positions into named groups with aggregate value and gain/loss. Collapse, rename, and delete groups. Each position is keyed by its unique Actual Budget account ID, so duplicate tickers work correctly.</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-card-icon">↕️</div>
+                            <h4>Column Sorting</h4>
+                            <p>Click any column header to sort ascending or descending. Sort by ticker, quantity, purchase date, buy price, cost basis, value, or gain/loss.</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-card-icon">🔄</div>
+                            <h4>Price Sync</h4>
+                            <p>Fetch live prices from Yahoo Finance with one click. Dual timestamps show the last successful Yahoo Finance fetch and the last Actual Budget write separately.</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-card-icon">🔒</div>
+                            <h4>Password Protection</h4>
+                            <p>Optional web UI password. Set via <code>WEB_PASSWORD</code> env var or through the Settings panel. Shows a branded sign-in modal instead of the browser's native auth dialog.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Grouping -->
+                <section class="docs-section" id="grouping">
+                    <h2><span class="section-icon">🗂</span> Stock Grouping</h2>
+                    <p class="section-lead">New in v1.2.0 — organise your portfolio into named groups with aggregated totals.</p>
+
+                    <h3>Creating a group</h3>
+                    <p>Each stock row has a small <strong>＋ Group</strong> tag below its name. Click it to open the assignment dropdown, then choose <em>＋ New group</em> and enter a name.</p>
+
+                    <h3>Assigning stocks</h3>
+                    <p>Click the group tag on any stock to reassign it. Existing groups appear in the dropdown — select one to move the stock, or choose <em>No group</em> to unassign.</p>
+
+                    <h3>Group actions</h3>
+                    <ul>
+                        <li><strong>Collapse / expand</strong> — click the ▼ chevron or the group name.</li>
+                        <li><strong>Rename</strong> — double-click the group name label.</li>
+                        <li><strong>Delete</strong> — hover the group header to reveal the ✕ button. Member stocks are unassigned, not deleted.</li>
+                    </ul>
+
+                    <h3>Duplicate tickers</h3>
+                    <p>Multiple positions of the same fund (same ticker, different purchase date) are each tracked as a separate Actual Budget account. Group assignment is keyed on the unique <code>accountId</code>, so each position can independently belong to any group.</p>
+                </section>
+
+                <!-- Auth -->
+                <section class="docs-section" id="auth">
+                    <h2><span class="section-icon">🔒</span> Authentication</h2>
+                    <p class="section-lead">Protect the web UI with a password. No restart required to change it.</p>
+
+                    <h3>Setting a password</h3>
+                    <p>Two ways — whichever takes precedence:</p>
+                    <ul>
+                        <li><strong>Env var (hard override):</strong> set <code>WEB_PASSWORD=yourpassword</code> in <code>docker-compose.yml</code> or <code>.env</code>. Cannot be changed from the UI while the env var is set.</li>
+                        <li><strong>Settings panel:</strong> enter a password in the <em>Web UI Password</em> field and save. Persisted to <code>portfolio.json</code>. Can be removed with the <em>Remove Web Password</em> button.</li>
+                    </ul>
+
+                    <h3>How it works</h3>
+                    <p>Static assets (<code>index.html</code>, <code>app.js</code>, <code>styles.css</code>) are served without authentication so the page loads first. All <code>/api/*</code> routes require a valid <code>Authorization: Basic</code> header. A 401 from any API call triggers the branded sign-in modal; credentials are stored in <code>sessionStorage</code> for the tab session.</p>
+                </section>
+
+                <!-- API -->
+                <section class="docs-section" id="api">
+                    <h2><span class="section-icon">🔌</span> API Reference</h2>
+                    <p class="section-lead">All endpoints return JSON. When a web password is configured, include an <code>Authorization: Basic base64(:password)</code> header.</p>
+
+                    <h3>Portfolio</h3>
+                    <table class="docs-table">
+                        <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>GET</td><td>/api/performance</td><td>Full portfolio with gain/loss, groups, and sync timestamps</td></tr>
+                            <tr><td>GET</td><td>/api/portfolio</td><td>Lightweight portfolio summary (no Actual Budget required)</td></tr>
+                            <tr><td>POST</td><td>/api/update-prices</td><td>Fetch fresh prices from Yahoo Finance and sync to Actual Budget</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Stocks</h3>
+                    <table class="docs-table">
+                        <thead><tr><th>Method</th><th>Path</th><th>Body</th></tr></thead>
+                        <tbody>
+                            <tr><td>POST</td><td>/api/stocks</td><td><code>{ ticker, quantity, purchaseDate?, purchasePrice? }</code></td></tr>
+                            <tr><td>DELETE</td><td>/api/stocks/:ticker</td><td>—</td></tr>
+                            <tr><td>PUT</td><td>/api/stocks/:ticker/quantity</td><td><code>{ quantity }</code></td></tr>
+                            <tr><td>PATCH</td><td>/api/stocks/:ticker</td><td><code>{ purchaseDate?, purchasePrice? }</code></td></tr>
+                            <tr><td>PATCH</td><td>/api/stocks/by-account/:accountId/group</td><td><code>{ groupId }</code> — use <code>null</code> to unassign</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Groups</h3>
+                    <table class="docs-table">
+                        <thead><tr><th>Method</th><th>Path</th><th>Body</th></tr></thead>
+                        <tbody>
+                            <tr><td>POST</td><td>/api/groups</td><td><code>{ name }</code></td></tr>
+                            <tr><td>PATCH</td><td>/api/groups/:id</td><td><code>{ name }</code></td></tr>
+                            <tr><td>DELETE</td><td>/api/groups/:id</td><td>— Unassigns member stocks</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Connection</h3>
+                    <table class="docs-table">
+                        <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>GET</td><td>/api/connection</td><td>Current connection settings (password masked)</td></tr>
+                            <tr><td>POST</td><td>/api/connection</td><td>Update server URL, password, budget ID, web password</td></tr>
+                            <tr><td>DELETE</td><td>/api/connection</td><td>Reset all connection settings to env-var defaults</td></tr>
+                            <tr><td>GET</td><td>/api/budgets</td><td>List budgets from the Actual Budget server</td></tr>
+                            <tr><td>GET</td><td>/api/accounts</td><td>List Actual Budget accounts with balances</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Changelog -->
+                <section class="docs-section" id="changelog">
+                    <h2><span class="section-icon">📋</span> Changelog</h2>
+                    <p class="section-lead">All notable changes to Helvetfolio.</p>
+
+                    <!-- v1.2.0 -->
+                    <div class="release-header">
+                        <span class="release-version">v1.2.0</span>
+                        <span class="release-date">2026-03-22</span>
+                        <span class="release-tag latest">Latest</span>
+                        <span class="release-tag feature">Feature release</span>
+                    </div>
+
+                    <div class="change-group">
+                        <div class="change-group-label">Added</div>
+                        <ul class="change-list">
+                            <li><span class="change-pill pill-new">New</span>Stock grouping — named groups with aggregate value, gain/loss, collapse/expand, rename, and delete. Keyed on Actual Budget <code>accountId</code> to support duplicate tickers.</li>
+                            <li><span class="change-pill pill-new">New</span>Column sorting — click any header to sort ascending / descending.</li>
+                            <li><span class="change-pill pill-new">New</span>Sticky delete column — action column stays visible when table overflows horizontally.</li>
+                            <li><span class="change-pill pill-new">New</span>Custom dialog modals — all native <code>confirm()</code> / <code>prompt()</code> replaced with styled modals.</li>
+                            <li><span class="change-pill pill-new">New</span>Custom login modal — branded sign-in replaces browser's native HTTP Basic Auth dialog.</li>
+                            <li><span class="change-pill pill-new">New</span>Footer with author credit and GitHub link.</li>
+                            <li><span class="change-pill pill-new">New</span>Documentation page (<code>/docs.html</code>) styled with the Helvetfolio design system.</li>
+                        </ul>
+                    </div>
+
+                    <div class="change-group">
+                        <div class="change-group-label">Fixed</div>
+                        <ul class="change-list">
+                            <li><span class="change-pill pill-fix">Fix</span>Buy price race condition — <code>updateAllPrices()</code> reloads portfolio after the Yahoo Finance fetch so concurrent inline edits are not overwritten.</li>
+                            <li><span class="change-pill pill-fix">Fix</span>Buy price = 0 — falsy <code>||</code> checks replaced with <code>!= null</code> guards throughout the save and display chain.</li>
+                            <li><span class="change-pill pill-fix">Fix</span>Group assignment with duplicate tickers — uses <code>accountId</code> instead of ticker as the unique key.</li>
+                            <li><span class="change-pill pill-fix">Fix</span>Group dropdown scroll offset — removed incorrect <code>scrollY</code> addition for a <code>position: fixed</code> element.</li>
+                            <li><span class="change-pill pill-fix">Fix</span>Auth race condition on startup — shared <code>_authPromise</code> ensures only one login flow runs for concurrent 401 responses.</li>
+                        </ul>
+                    </div>
+
+                    <div class="change-group">
+                        <div class="change-group-label">Changed</div>
+                        <ul class="change-list">
+                            <li><span class="change-pill pill-changed">Changed</span>Full UI redesign — individual summary cards, spring-curve animations, pill badges, refined colour tokens, and consistent group-header rows.</li>
+                            <li><span class="change-pill pill-changed">Changed</span>Auth moved to <code>/api/*</code> only — static assets served without auth so the page loads before credentials are needed.</li>
+                            <li><span class="change-pill pill-changed">Changed</span><code>display: flex</code> moved from <code>&lt;td&gt;</code> to inner <code>&lt;div&gt;</code> in group header rows, fixing a table-layout height gap.</li>
+                        </ul>
+                    </div>
+
+                    <hr style="border: none; border-top: 1px solid var(--separator); margin: 32px 0;">
+
+                    <!-- v1.0.2 -->
+                    <div class="release-header">
+                        <span class="release-version">v1.0.2</span>
+                        <span class="release-date">2026-03-21</span>
+                        <span class="release-tag fix">Patch</span>
+                    </div>
+                    <ul class="change-list">
+                        <li><span class="change-pill pill-fix">Fix</span>CI: <code>sonarqube</code> job now sets Node 22 and uses <code>npm ci --ignore-scripts</code>, matching the <code>test</code> job.</li>
+                        <li><span class="change-pill pill-fix">Fix</span>Coverage script calls <code>c8</code> directly instead of <code>yarn c8</code>.</li>
+                        <li><span class="change-pill pill-new">New</span>Zero-config start-up, new SVG logo, Docker entrypoint, split container services, multi-stage Dockerfile, Add-stock button guard.</li>
+                    </ul>
+
+                    <hr style="border: none; border-top: 1px solid var(--separator); margin: 32px 0;">
+
+                    <!-- v1.0.0 -->
+                    <div class="release-header">
+                        <span class="release-version">v1.0.0</span>
+                        <span class="release-date">2026-02-28</span>
+                        <span class="release-tag fix">Initial</span>
+                    </div>
+                    <ul class="change-list">
+                        <li><span class="change-pill pill-new">New</span>Web UI, daemon mode, CLI, Yahoo Finance price sync, Actual Budget integration.</li>
+                        <li><span class="change-pill pill-new">New</span>Docker image (amd64 + arm64) published to Docker Hub and GHCR.</li>
+                        <li><span class="change-pill pill-new">New</span>GitHub Actions CI with test, SonarQube, and multi-platform Docker build. 82 unit tests.</li>
+                    </ul>
+                </section>
+
+            </main>
+        </div>
+
+        <footer class="footer">
+            Made with ❤️ by Flavio &nbsp;·&nbsp;
+            <a href="https://github.com/flawas/actualbudget-helvetfolio" target="_blank" rel="noopener">
+                github.com/flawas/actualbudget-helvetfolio
+            </a>
+        </footer>
+    </div>
+</body>
+</html>
